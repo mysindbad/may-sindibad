@@ -13,8 +13,7 @@ const bodySchema = z.object({
   status: z.enum(["open", "reviewed", "dismissed", "actioned"]),
 });
 
-/** Backend-only moderation primitive, same shape as admin/providers/[id]/verification. */
-export async function PATCH(request, context) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
   try {
     const user = await requireUser();
