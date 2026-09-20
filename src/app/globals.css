@@ -82,3 +82,16 @@ body {
 .animate-skeleton {
   animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
+
+/* Live-position marker on the navigation map. */
+@keyframes sindbad-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(28, 126, 214, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(28, 126, 214, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(28, 126, 214, 0);
+  }
+}
