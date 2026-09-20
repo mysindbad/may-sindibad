@@ -12,6 +12,8 @@ import { Badge, Card } from "@/components/ui/primitives";
 import { formatCurrency } from "@/lib/utils";
 import { ProviderBookingActions } from "@/components/provider/ProviderBookingActions";
 import { BookingStatusBadge } from "@/components/bookings/BookingStatusBadge";
+import { BusinessEditForm } from "@/components/provider/BusinessEditForm";
+import { ServiceActions } from "@/components/provider/ServiceActions";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,21 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
         <Badge tone={provider.verificationStatus === "verified" ? "lime" : "neutral"} className="mt-2">
           {provider.verificationStatus === "verified" ? dict.marketplace.verificationVerified : dict.marketplace.verificationPending}
         </Badge>
+        <div className="mt-3">
+          <BusinessEditForm
+            provider={{
+              id: provider.id,
+              name: provider.name,
+              description: provider.description,
+              city: provider.city,
+              country: provider.country,
+              address: provider.address,
+              phone: provider.phone,
+              website: provider.website,
+              verificationStatus: provider.verificationStatus,
+            }}
+          />
+        </div>
       </div>
 
 
@@ -75,13 +92,24 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-brand-950">{dict.marketplace.services}</h2>
+        {services.length === 0 && <p className="text-sm text-slate-500">{dict.providerTools.noServices}</p>}
         {services.map((service) => (
-          <Card key={service.id} className="flex items-center justify-between p-3">
-            <div>
-              <p className="text-sm font-semibold text-brand-950">{service.name}</p>
-              <p className="text-xs text-slate-500">{service.category}</p>
+          <Card key={service.id} className="p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-brand-950">{service.name}</p>
+                <p className="text-xs text-slate-500">{service.category}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {!service.isActive && <Badge tone="neutral">{dict.providerTools.inactive}</Badge>}
+                {service.priceAmount && (
+                  <span className="text-xs font-medium text-sky-700">{formatCurrency(service.priceAmount, service.priceCurrency, locale)}</span>
+                )}
+              </div>
             </div>
-            {service.priceAmount && <span className="text-xs font-medium text-sky-700">{formatCurrency(service.priceAmount, service.priceCurrency, locale)}</span>}
+            <ServiceActions
+              service={{ id: service.id, name: service.name, priceAmount: service.priceAmount, isActive: service.isActive }}
+            />
           </Card>
         ))}
         <ServiceForm providerId={provider.id} />
