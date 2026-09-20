@@ -36,9 +36,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
   const links = [
     { href: "/trips", label: dict.profile.yourTrips, icon: "🗺️" },
     { href: "/bookings", label: dict.profile.yourBookings, icon: "🧾" },
+    { href: "/favorites", label: dict.profile.savedPlaces, icon: "🤍" },
     { href: "/provider", label: dict.nav.becomeProvider, icon: "🏪" },
     { href: "/settings", label: dict.profile.accountSettings, icon: "⚙️" },
   ];
+
+  // Moderation is the one area with no other entry point in the product.
+  if (user.role === "admin") {
+    links.push({ href: "/admin", label: dict.admin.title, icon: "🛡️" });
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-5 px-4 py-6">
