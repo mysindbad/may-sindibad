@@ -195,6 +195,15 @@ export const providerServiceCreateSchema = z.object({
   coverImageUrl: httpUrlSchema(1000).optional(),
 });
 
+// providerId is intentionally excluded: a service cannot be reassigned to a
+// different business after creation, only edited or (soft-)deleted via
+// isActive. Editing after creation and deactivating were previously
+// impossible -- no PATCH/DELETE existed on the service resource at all.
+export const providerServiceUpdateSchema = providerServiceCreateSchema
+  .omit({ providerId: true })
+  .partial()
+  .extend({ isActive: z.boolean().optional() });
+
 export const bookingCreateSchema = z.object({
   providerId: z.string().uuid(),
   serviceId: z.string().uuid(),
