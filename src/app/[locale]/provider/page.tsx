@@ -14,6 +14,7 @@ import { ProviderBookingActions } from "@/components/provider/ProviderBookingAct
 import { BookingStatusBadge } from "@/components/bookings/BookingStatusBadge";
 import { BusinessEditForm } from "@/components/provider/BusinessEditForm";
 import { ServiceActions } from "@/components/provider/ServiceActions";
+import { categoryLabel } from "@/lib/domain/category-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-brand-950">{service.name}</p>
-                <p className="text-xs text-slate-500">{service.category}</p>
+                <p className="text-xs text-slate-500">{categoryLabel(service.category, dict)}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {!service.isActive && <Badge tone="neutral">{dict.providerTools.inactive}</Badge>}
