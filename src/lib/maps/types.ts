@@ -71,7 +71,23 @@ export function createRasterTileStyle(config: RasterTileConfig) {
   };
 }
 
+/**
+ * Client components (e.g. MapView.tsx) call this in the browser. Next.js only
+ * inlines NEXT_PUBLIC_* values into the client bundle when the literal
+ * expression \`process.env.NEXT_PUBLIC_X\` appears at the call site — passing
+ * the whole \`process.env\` object through a function parameter (as
+ * resolveRasterTileConfig's default arg does) defeats that static analysis,
+ * so the browser previously always saw an empty env and silently fell back
+ * to the OSM dev tiles regardless of what was configured. Reading each var
+ * literally here, at this call site, keeps resolveRasterTileConfig itself
+ * generic/testable while making sure the client bundle actually gets the
+ * build-time values.
+ */
 export function getDefaultTileStyle() {
-  const config = resolveRasterTileConfig();
+  const config = resolveRasterTileConfig({
+    NEXT_PUBLIC_MAP_TILE_URL: process.env.NEXT_PUBLIC_MAP_TILE_URL,
+    NEXT_PUBLIC_MAP_ATTRIBUTION: process.env.NEXT_PUBLIC_MAP_ATTRIBUTION,
+    NODE_ENV: process.env.NODE_ENV,
+  } as NodeJS.ProcessEnv);
   return config ? createRasterTileStyle(config) : null;
 }
