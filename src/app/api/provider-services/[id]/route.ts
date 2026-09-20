@@ -9,13 +9,6 @@ import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
 import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 
-// A provider service previously could only ever be created (POST
-// /api/provider-services), never edited or removed -- a provider who made a
-// typo in a price or wanted to retire a listing had no way to do either.
-// This adds the missing PATCH (edit) and DELETE (soft-delete via isActive)
-// on the individual service resource, following the same ownership-check
-// pattern as /api/providers/[id].
-
 async function loadOwnedService(id, userId) {
   const [row] = await db
     .select({ service: providerServices, providerOwnerUserId: providers.ownerUserId })
@@ -32,7 +25,7 @@ export async function PATCH(request, context) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
   try {
     const user = await requireUser();
-    const rate = await checkRateLimit(clientKeyFromRequest(request, \`provider-service:\${user.id}\`), 30, 60 * 60 * 1000);
+    const rate = await checkRateLimit(clientKeyFromRequest(request, "provider-service:" + user.id), 30, 60 * 60 * 1000);
     if (!rate.allowed) return jsonError("Too many service changes. Please slow down.", 429);
 
     const { id } = await context.params;
@@ -68,17 +61,13 @@ export async function DELETE(request, context) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
   try {
     const user = await requireUser();
-    const rate = await checkRateLimit(clientKeyFromRequest(request, \`provider-service:\${user.id}\`), 30, 60 * 60 * 1000);
+    const rate = await checkRateLimit(clientKeyFromRequest(request, "provider-service:" + user.id), 30, 60 * 60 * 1000);
     if (!rate.allowed) return jsonError("Too many service changes. Please slow down.", 429);
 
     const { id } = await context.params;
     const owned = await loadOwnedService(id, user.id);
     if ("error" in owned) return owned.error;
 
-    // Soft-delete: existing bookings reference this service by id, so a hard
-    // delete would either cascade-destroy booking history or fail on the
-    // foreign key. Deactivating hides it from new bookings while keeping past
-    // records intact -- the same convention providers.isActive already uses.
     const [service] = await db
       .update(providerServices)
       .set({ isActive: false, updatedAt: new Date() })
