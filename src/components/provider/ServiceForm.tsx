@@ -6,6 +6,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { Button, Input, Label, Select } from "@/components/ui/primitives";
 import { InlineAlert } from "@/components/ui/feedback";
 import { buildLoginPath } from "@/lib/auth/return-path";
+import { categoryLabel } from "@/lib/domain/category-labels";
 
 const CATEGORIES = ["hotel", "restaurant", "activity", "tour", "vehicle", "boat", "transfer", "other"] as const;
 
@@ -69,7 +70,7 @@ export function ServiceForm({ providerId }: { providerId: string }) {
           <Select id="service-category" value={category} onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {categoryLabel(c, dict)}
               </option>
             ))}
           </Select>
