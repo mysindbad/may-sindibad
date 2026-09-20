@@ -18,7 +18,7 @@ function parseDeclaredContentLength(value: string | null): number | null {
   return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
-export async function readRequestBodyWithLimit(request: Request, maxBytes: number): <<UPromiseint8Array> {
+export async function readRequestBodyWithLimit(request: Request, maxBytes: number): Promise<Uint8Array<ArrayBuffer>> {
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new TypeError("maxBytes must be a positive safe integer.");
 
   const declaredLength = parseDeclaredContentLength(request.headers.get("content-length"));
@@ -63,7 +63,7 @@ export class ResponseBodyTooLargeError extends Error {
   }
 }
 
-export async function readResponseBodyWithLimit(response: Response, maxBytes: number): <Promise<Uint8Array<ArrayBuffer>> {
+export async function readResponseBodyWithLimit(response: Response, maxBytes: number): Promise<Uint8Array<ArrayBuffer>> {
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new TypeError("maxBytes must be a positive safe integer.");
 
   const declaredLength = parseDeclaredContentLength(response.headers.get("content-length"));
