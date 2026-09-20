@@ -9,19 +9,19 @@ import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
 import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 
-async function loadOwnedService(id, userId) {
+async function loadOwnedService(id: string, userId: string) {
   const [row] = await db
     .select({ service: providerServices, providerOwnerUserId: providers.ownerUserId })
     .from(providerServices)
     .innerJoin(providers, eq(providerServices.providerId, providers.id))
     .where(eq(providerServices.id, id))
     .limit(1);
-  if (!row) return { error: jsonError("Service not found.", 404) };
-  if (row.providerOwnerUserId !== userId) return { error: jsonError("You don't own this listing.", 403) };
-  return { service: row.service };
+  if (!row) return { error: jsonError("Service not found.", 404) } as const;
+  if (row.providerOwnerUserId !== userId) return { error: jsonError("You don't own this listing.", 403) } as const;
+  return { service: row.service } as const;
 }
 
-export async function PATCH(request, context) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
   try {
     const user = await requireUser();
@@ -57,7 +57,7 @@ export async function PATCH(request, context) {
   }
 }
 
-export async function DELETE(request, context) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
   try {
     const user = await requireUser();
