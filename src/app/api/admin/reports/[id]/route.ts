@@ -20,7 +20,7 @@ export async function PATCH(request, context) {
     const user = await requireUser();
     if (user.role !== "admin") return jsonError("Administrator access is required.", 403);
 
-    const rate = await checkRateLimit(clientKeyFromRequest(request, \`admin-report:\${user.id}\`), 120, 60 * 60 * 1000);
+    const rate = await checkRateLimit(clientKeyFromRequest(request, "admin-report:" + user.id), 120, 60 * 60 * 1000);
     if (!rate.allowed) return jsonError("Too many moderation changes. Please slow down.", 429);
 
     const json = await parseJsonBodyWithLimit(request);
