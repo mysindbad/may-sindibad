@@ -126,12 +126,19 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
         )}
 
         {status === "ready" && view === "map" && (
-          <MapView
-            className="h-full min-h-[400px] w-full rounded-2xl"
-            center={mapCenter}
-            markers={places.filter((p) => typeof p.lat === "number" && typeof p.lng === "number").map((p) => ({ id: p.id, lat: p.lat!, lng: p.lng!, title: p.name }))}
-            onMarkerClick={(id) => router.push(`/${locale}/explore/${id}`)}
-          />
+          <div className="relative h-full">
+            <MapView
+              className="h-full min-h-[400px] w-full rounded-2xl"
+              center={mapCenter}
+              markers={places.filter((p) => typeof p.lat === "number" && typeof p.lng === "number").map((p) => ({ id: p.id, lat: p.lat!, lng: p.lng!, title: p.name }))}
+              onMarkerClick={(id) => setSelectedId(id)}
+            />
+            {selectedPlace && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3">
+                <MapPlaceCard place={selectedPlace} onClose={() => setSelectedId(null)} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
