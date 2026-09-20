@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * My Sindbad design tokens
+ * Derived from the brand mark: deep travel blue, cyan/sky, white, subtle
+ * turquoise, restrained lime accent, warm sun/yellow used sparingly.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --font-sans: "Sindbad Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-950: #051726;
+  --color-brand-900: #071c33;
+  --color-brand-800: #0b3552;
+  --color-brand-700: #0f4a70;
+  --color-brand-600: #14608f;
+  --color-brand-500: #1a78ad;
+
+  --color-sky-500: #1fb2d6;
+  --color-sky-400: #4bc7e6;
+  --color-sky-300: #8adcf0;
+
+  --color-turquoise-500: #1fb8a3;
+  --color-turquoise-400: #4fd0bd;
+
+  --color-lime-400: #a8d94a;
+  --color-lime-300: #c1e77e;
+
+  --color-sun-400: #f4b93e;
+  --color-sun-300: #f8cd6f;
+
+  --color-sand-50: #f8faf9;
+  --color-sand-100: #f1f6f5;
+
+  --shadow-card: 0 12px 32px -12px rgba(7, 28, 51, 0.18);
+  --shadow-elevated: 0 24px 60px -20px rgba(7, 28, 51, 0.32);
+}
+
+html {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-sand-50);
+  color: var(--color-brand-950);
+}
+
+/* RTL-safe: use logical properties everywhere instead of left/right utilities
+   in custom CSS. Tailwind utility classes used across components rely on
+   ms-/me-/ps-/pe- (logical) variants rather than ml-/mr-. */
+[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.animate-skeleton {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
