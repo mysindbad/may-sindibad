@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Input, Button, Badge } from "@/components/ui/primitives";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { PlaceCard, type PlaceCardData } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
+import { MapPlaceCard } from "@/components/explore/MapPlaceCard";
+import { categoryLabel } from "@/lib/domain/category-labels";
 import { cn } from "@/lib/utils";
 
 const MapView = dynamic(() => import("@/components/map/MapView").then((m) => m.MapView), {
@@ -19,7 +20,6 @@ const CATEGORY_FILTERS = ["attraction", "beach", "restaurant", "cafe", "hotel", 
 
 export function ExploreView({ initialCity }: { initialCity: string }) {
   const { dict, locale } = useLocale();
-  const router = useRouter();
 
   const [search, setSearch] = useState(initialCity);
   const [searchInput, setSearchInput] = useState(initialCity);
@@ -27,6 +27,7 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
   const [view, setView] = useState<"list" | "map">("list");
   const [places, setPlaces] = useState<PlaceCardData[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const load = useCallback(async (targetSearch: string, targetCategory: string | null) => {
     if (!targetSearch) return;
@@ -52,6 +53,8 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
     const located = places.find((place) => typeof place.lat === "number" && typeof place.lng === "number");
     return located ? { lat: located.lat!, lng: located.lng! } : { lat: 20, lng: 0 };
   }, [places]);
+
+  const selectedPlace = useMemo(() => places.find((place) => place.id === selectedId) ?? null, [places, selectedId]);
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-56px)] max-w-6xl flex-col px-4 py-4 md:h-[calc(100dvh-64px)]">
@@ -96,7 +99,7 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
       <div className="mb-3 flex gap-2 overflow-x-auto scrollbar-none">
         {CATEGORY_FILTERS.map((slug) => (
           <button key={slug} type="button" onClick={() => setCategory(category === slug ? null : slug)} aria-pressed={category === slug}>
-            <Badge tone={category === slug ? "brand" : "neutral"}>{slug}</Badge>
+            <Badge tone={category === slug ? "brand" : "neutral"}>{categoryLabel(slug, dict)}</Badge>
           </button>
         ))}
       </div>
