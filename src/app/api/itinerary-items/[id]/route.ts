@@ -8,6 +8,27 @@ import { itineraryItemUpdateSchema } from "@/lib/validation";
 import { jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
+import { removeItineraryItem } from "@/lib/trips/actions";
+
+/**
+ * Remove an activity from a trip. Previously an item could be added and
+ * edited but never taken out, so a plan could only ever grow.
+ */
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
+  const { id } = await context.params;
+  const owner = await getOwnerContext();
+
+  const result = await removeItineraryItem({ itemId: id, owner });
+  if (!result.ok) {
+    if (result.error === "item_booked") {
+      return jsonError("This itinerary item is linked to a booking. Cancel the booking first.", 409);
+    }
+    if (result.error === "forbidden") return jsonError("You don't have permission to edit this itinerary.", 403);
+    return jsonError("Activity not found.", 404);
+  }
+  return NextResponse.json({ removed: result.data.removedId, tripId: result.data.tripId });
+}
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutationRequest(request)) return jsonError("Request origin is not allowed.", 403);
