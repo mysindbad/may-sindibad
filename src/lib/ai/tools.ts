@@ -1,14 +1,30 @@
 import "server-only";
-import { ilike, eq, and, or } from "drizzle-orm";
+import { ilike, eq, and, or, asc, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { places } from "@/db/schema";
+import { itineraryItems, places, tripDays, trips } from "@/db/schema";
 import type { AiToolDefinition } from "./provider";
 import { escapeLikePattern, normalizeAiToolText } from "./tool-input";
+import type { OwnerContext } from "@/lib/auth/owner-context";
+import { addPlaceToTrip, moveItineraryItem, removeItineraryItem, summarizeTripBudget } from "@/lib/trips/actions";
+import { loadOwnedTrip } from "@/lib/trips/ownership";
 
-// Tool-calling scaffold: Sindbad AI can query real internal data instead of
-// hallucinating it. Only read-only, side-effect-free lookups are exposed for
-// now; booking/mutation tools should go through the normal authenticated API
-// so ownership and payment rules stay enforced in one place.
+// Tool-calling scaffold: Sindbad AI works on the traveller's real trip instead
+// of describing changes it cannot make.
+//
+// Two rules hold every tool together:
+//   1. The model never supplies an identity. Ownership comes from the session
+//      on the server, so "delete my restaurant" can only ever touch the
+//      caller's own trip, whatever the model was told to do.
+//   2. Every mutation goes through lib/trips/actions, the same guarded layer
+//      the UI buttons use, so booked items and foreign trips are protected in
+//      one place rather than once per caller.
+
+export interface AiToolContext {
+  owner: OwnerContext;
+  /** Trip the conversation is attached to, when the UI supplied one. */
+  tripId?: string;
+}
+
 export const AI_TOOLS: AiToolDefinition[] = [
   {
     name: "search_places",
@@ -23,9 +39,95 @@ export const AI_TOOLS: AiToolDefinition[] = [
       required: ["city"],
     },
   },
+  {
+    name: "list_my_trips",
+    description:
+      "List the traveller's own trips with destination, dates, travellers and budget. Use this to find the trip the traveller means before changing anything.",
+    parameters: { type: "object", properties: {}, required: [] },
+  },
+  {
+    name: "get_trip",
+    description:
+      "Read one of the traveller's trips in full: every day, the activities planned on each day with their ids, and the budget against the planned cost. Use the itinerary item ids it returns when removing or moving an activity.",
+    parameters: {
+      type: "object",
+      properties: {
+        tripId: { type: "string", description: "Trip id. Defaults to the trip the conversation is attached to." },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "add_place_to_trip",
+    description:
+      "Add a place from the places database to a day of the traveller's trip. Find the place id with search_places first. Never invent a place id.",
+    parameters: {
+      type: "object",
+      properties: {
+        placeId: { type: "string", description: "Id of an existing place from search_places" },
+        tripId: { type: "string", description: "Trip id. Defaults to the trip the conversation is attached to." },
+        dayIndex: { type: "number", description: "Zero-based day number within the trip. Omit to use the first day." },
+      },
+      required: ["placeId"],
+    },
+  },
+  {
+    name: "remove_itinerary_item",
+    description:
+      "Remove one activity from the traveller's trip using the itinerary item id from get_trip. An activity linked to a booking cannot be removed this way.",
+    parameters: {
+      type: "object",
+      properties: { itemId: { type: "string", description: "Itinerary item id from get_trip" } },
+      required: ["itemId"],
+    },
+  },
+  {
+    name: "move_itinerary_item",
+    description: "Move one activity to a different day of the same trip, using the itinerary item id from get_trip.",
+    parameters: {
+      type: "object",
+      properties: {
+        itemId: { type: "string", description: "Itinerary item id from get_trip" },
+        dayIndex: { type: "number", description: "Zero-based day number to move the activity to" },
+      },
+      required: ["itemId", "dayIndex"],
+    },
+  },
 ];
 
-export async function executeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+function readId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  // Ids in this product are UUIDs; anything else is a hallucination, not a lookup.
+  return /^[0-9a-fA-F-]{36}$/.test(trimmed) ? trimmed : null;
+}
+
+function readDayIndex(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  const rounded = Math.trunc(parsed);
+  return rounded >= 0 && rounded <= 364 ? rounded : undefined;
+}
+
+/** Human-readable failures the model can act on, never raw internals. */
+const ACTION_MESSAGE: Record<string, string> = {
+  trip_not_found: "That trip does not exist.",
+  forbidden: "That trip does not belong to this traveller.",
+  day_not_found: "That day is not part of the trip.",
+  place_not_found: "That place id does not match any place in the database.",
+  item_not_found: "That itinerary item does not exist.",
+  item_booked: "That activity is linked to a booking, so it cannot be changed here.",
+};
+
+export async function executeTool(
+  name: string,
+  args: Record<string, unknown>,
+  context: AiToolContext,
+): Promise<unknown> {
+  const { owner } = context;
+  const hasOwner = Boolean(owner.userId || owner.guestId);
+
   if (name === "search_places") {
     const cityInput = normalizeAiToolText(args.city, 120, true);
     const countryInput = normalizeAiToolText(args.country, 120);
@@ -41,7 +143,7 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
     const conditions = [ilike(places.city, city), eq(places.status, "approved")];
     if (country) conditions.push(ilike(places.country, country));
     if (keyword) {
-      conditions.push(or(ilike(places.name, `%${keyword}%`), ilike(places.description, `%${keyword}%`))!);
+      conditions.push(or(ilike(places.name, "%" + keyword + "%"), ilike(places.description, "%" + keyword + "%"))!);
     }
 
     const rows = await db
@@ -52,5 +154,122 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
 
     return { results: rows };
   }
-  return { error: `Unknown tool: ${name}` };
+
+  if (name === "list_my_trips") {
+    if (!hasOwner) return { trips: [], note: "This traveller has no trips yet." };
+    const ownerFilter = owner.userId ? eq(trips.userId, owner.userId) : eq(trips.guestId, owner.guestId!);
+    const rows = await db
+      .select({
+        id: trips.id,
+        title: trips.title,
+        destinationCity: trips.destinationCity,
+        destinationCountry: trips.destinationCountry,
+        startDate: trips.startDate,
+        endDate: trips.endDate,
+        travelers: trips.travelers,
+        budgetAmount: trips.budgetAmount,
+        budgetCurrency: trips.budgetCurrency,
+        status: trips.status,
+      })
+      .from(trips)
+      .where(ownerFilter)
+      .orderBy(asc(trips.createdAt))
+      .limit(20);
+    return { trips: rows };
+  }
+
+  if (name === "get_trip") {
+    const tripId = readId(args.tripId) ?? context.tripId ?? null;
+    if (!tripId) return { error: "No trip specified. Call list_my_trips first." };
+
+    const { trip, allowed } = await loadOwnedTrip(tripId, owner);
+    if (!trip) return { error: ACTION_MESSAGE.trip_not_found };
+    if (!allowed) return { error: ACTION_MESSAGE.forbidden };
+
+    const days = await db.select().from(tripDays).where(eq(tripDays.tripId, tripId)).orderBy(asc(tripDays.dayIndex));
+    const dayIds = days.map((day) => day.id);
+    const items = dayIds.length
+      ? await db
+          .select({
+            id: itineraryItems.id,
+            tripDayId: itineraryItems.tripDayId,
+            title: itineraryItems.title,
+            category: itineraryItems.category,
+            startTime: itineraryItems.startTime,
+            estimatedCost: itineraryItems.estimatedCost,
+            currency: itineraryItems.currency,
+            placeId: itineraryItems.placeId,
+            booked: itineraryItems.bookingId,
+          })
+          .from(itineraryItems)
+          .where(inArray(itineraryItems.tripDayId, dayIds))
+          .orderBy(asc(itineraryItems.sortOrder))
+      : [];
+
+    const budget = await summarizeTripBudget(tripId);
+
+    return {
+      trip: {
+        id: trip.id,
+        title: trip.title,
+        destination: trip.destinationCity + ", " + trip.destinationCountry,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        travelers: trip.travelers,
+      },
+      budget,
+      days: days.map((day) => ({
+        dayIndex: day.dayIndex,
+        date: day.date,
+        items: items
+          .filter((item) => item.tripDayId === day.id)
+          .map((item) => ({
+            itemId: item.id,
+            title: item.title,
+            category: item.category,
+            startTime: item.startTime,
+            // A missing estimate stays missing: the model must not present an
+            // unpriced activity as free.
+            estimatedCost: item.estimatedCost,
+            currency: item.currency,
+            isBooked: Boolean(item.booked),
+          })),
+      })),
+    };
+  }
+
+  if (name === "add_place_to_trip") {
+    const placeId = readId(args.placeId);
+    if (!placeId) return { error: "placeId must be an id returned by search_places." };
+    const tripId = readId(args.tripId) ?? context.tripId ?? null;
+    if (!tripId) return { error: "No trip specified. Call list_my_trips first." };
+
+    const result = await addPlaceToTrip({ tripId, placeId, dayIndex: readDayIndex(args.dayIndex), owner });
+    if (!result.ok) return { error: ACTION_MESSAGE[result.error] ?? "That change could not be applied." };
+    return {
+      added: { itemId: result.data.id, title: result.data.title, dayIndex: result.data.dayIndex, date: result.data.date },
+    };
+  }
+
+  if (name === "remove_itinerary_item") {
+    const itemId = readId(args.itemId);
+    if (!itemId) return { error: "itemId must be an id returned by get_trip." };
+
+    const result = await removeItineraryItem({ itemId, owner });
+    if (!result.ok) return { error: ACTION_MESSAGE[result.error] ?? "That change could not be applied." };
+    return { removed: result.data.removedId };
+  }
+
+  if (name === "move_itinerary_item") {
+    const itemId = readId(args.itemId);
+    if (!itemId) return { error: "itemId must be an id returned by get_trip." };
+    const dayIndex = readDayIndex(args.dayIndex);
+    if (dayIndex === undefined) return { error: "dayIndex must be a day number within the trip." };
+
+    const result = await moveItineraryItem({ itemId, toDayIndex: dayIndex, owner });
+    if (!result.ok) return { error: ACTION_MESSAGE[result.error] ?? "That change could not be applied." };
+    return { moved: { itemId: result.data.id, dayIndex: result.data.dayIndex, date: result.data.date } };
+  }
+
+  return { error: "Unknown tool: " + name };
 }
