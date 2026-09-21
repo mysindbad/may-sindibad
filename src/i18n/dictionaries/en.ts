@@ -347,6 +347,25 @@ const en = {
     transfer: "Transfer",
     other: "Other",
   },
+  addToTrip: {
+    button: "Add to my trip",
+    choose: "Choose a trip",
+    chooseDay: "Choose a day",
+    day: "Day",
+    added: "Added to your trip",
+    noTrips: "You have no trips yet.",
+    createFirst: "Create a trip",
+  },
+  tripBudget: {
+    title: "Budget",
+    planned: "Planned",
+    budget: "Budget",
+    remaining: "Remaining",
+    over: "Over budget",
+    unpriced: "Activities without a price",
+    noBudget: "No budget set for this trip.",
+    estimateNote: "Planned figures are estimates, not confirmed prices.",
+  },
 } as const;
 
 export default en;
