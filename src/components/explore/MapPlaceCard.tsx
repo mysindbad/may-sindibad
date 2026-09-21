@@ -5,6 +5,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { Badge, Button, Card } from "@/components/ui/primitives";
 import type { PlaceCardData } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
+import { AddToTripButton } from "@/components/trips/AddToTripButton";
 
 // Tapping a marker used to jump straight out of the map to a detail page,
 // which lost the map context entirely. This card keeps the traveller on the
@@ -52,6 +53,11 @@ export function MapPlaceCard({ place, onClose }: { place: PlaceCardData; onClose
             {dict.navigation.details}
           </Button>
         </Link>
+      </div>
+
+      {/* Discovering a place and planning with it are the same moment. */}
+      <div className="mt-2">
+        <AddToTripButton placeId={place.id} />
       </div>
     </Card>
   );
