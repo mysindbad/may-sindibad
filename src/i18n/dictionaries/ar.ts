@@ -350,6 +350,25 @@ const ar = {
     transfer: "توصيل",
     other: "أخرى",
   },
+  addToTrip: {
+    button: "أضف إلى رحلتي",
+    choose: "اختر الرحلة",
+    chooseDay: "اختر اليوم",
+    day: "اليوم",
+    added: "أُضيف إلى رحلتك",
+    noTrips: "ليس لديك رحلات بعد.",
+    createFirst: "أنشئ رحلة",
+  },
+  tripBudget: {
+    title: "الميزانية",
+    planned: "المخطَّط",
+    budget: "الميزانية",
+    remaining: "المتبقي",
+    over: "تجاوزت الميزانية",
+    unpriced: "أنشطة بدون سعر",
+    noBudget: "لم تُحدَّد ميزانية لهذه الرحلة.",
+    estimateNote: "الأرقام المخطَّطة تقديرية وليست أسعارًا مؤكدة.",
+  },
 } satisfies Dictionary;
 
 export default ar;
