@@ -9,6 +9,7 @@ import { jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
 import { toClientTripView } from "@/lib/trips/client-view";
+import { summarizeTripBudget } from "@/lib/trips/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,14 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     ? await db.select().from(itineraryItems).where(inArray(itineraryItems.tripDayId, dayIds)).orderBy(asc(itineraryItems.sortOrder))
     : [];
 
+  // The budget travels with the trip rather than sitting in its own screen,
+  // so every view that reads the trip already knows what the plan costs.
+  const budget = await summarizeTripBudget(id);
+
   return NextResponse.json({
     trip: toClientTripView(trip),
     days: days.map((day) => ({ ...day, items: items.filter((item) => item.tripDayId === day.id) })),
+    budget,
   });
 }
 
