@@ -351,6 +351,25 @@ const ru = {
     transfer: "Трансфер",
     other: "Другое",
   },
+  addToTrip: {
+    button: "Добавить в поездку",
+    choose: "Выберите поездку",
+    chooseDay: "Выберите день",
+    day: "День",
+    added: "Добавлено в вашу поездку",
+    noTrips: "У вас пока нет поездок.",
+    createFirst: "Создать поездку",
+  },
+  tripBudget: {
+    title: "Бюджет",
+    planned: "Запланировано",
+    budget: "Бюджет",
+    remaining: "Остаток",
+    over: "Превышен бюджет",
+    unpriced: "Активности без цены",
+    noBudget: "Для этой поездки бюджет не задан.",
+    estimateNote: "Запланированные суммы — оценка, а не подтверждённые цены.",
+  },
 } satisfies Dictionary;
 
 export default ru;
