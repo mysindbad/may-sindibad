@@ -351,6 +351,25 @@ const de = {
     transfer: "Transfer",
     other: "Sonstiges",
   },
+  addToTrip: {
+    button: "Zu meiner Reise hinzufügen",
+    choose: "Reise wählen",
+    chooseDay: "Tag wählen",
+    day: "Tag",
+    added: "Zu deiner Reise hinzugefügt",
+    noTrips: "Du hast noch keine Reisen.",
+    createFirst: "Reise erstellen",
+  },
+  tripBudget: {
+    title: "Budget",
+    planned: "Geplant",
+    budget: "Budget",
+    remaining: "Verbleibend",
+    over: "Budget überschritten",
+    unpriced: "Aktivitäten ohne Preis",
+    noBudget: "Für diese Reise ist kein Budget festgelegt.",
+    estimateNote: "Geplante Beträge sind Schätzungen, keine bestätigten Preise.",
+  },
 } satisfies Dictionary;
 
 export default de;
