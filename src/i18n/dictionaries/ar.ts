@@ -85,6 +85,7 @@ const ar = {
     exploreCta: "استكشف الخريطة",
     communityCta: "مجتمع المسافرين",
     emptyNearby: "فعّل الموقع لترى ما يحيط بك.",
+    nearbyFallback: "لا توجد أماكن مسجّلة قريبة منك بعد، إليك وجهات مميزة نقترحها عليك",
     enableLocation: "استخدام موقعي",
   },
   explore: {
@@ -231,6 +232,7 @@ const ar = {
     noContributions: "لا توجد مساهمات مجتمعية بعد — كن الأول.",
     placeName: "اسم المكان",
     travellerInfo: "ماذا ينبغي أن يعرف المسافرون الآخرون؟",
+    contributeIntro: "لم تجد مكانك المفضل في الدليل؟ أضِفه ليستفيد منه مسافرون آخرون أيضًا.",
   },
   profile: {
     title: "الملف الشخصي",
@@ -389,8 +391,6 @@ const ar = {
     captionPlace: "اكتشف أماكن",
     captionTip: "قدم نصيحتك",
     captionMoment: "شارك صورك",
-    storyTitlePlaceholder: "عنوان القصة",
-    storyBodyPlaceholder: "شارك قصة سفرك بالتفصيل…",
     placeholder: "شارك لحظة أو نصيحة أو مكانًا يستحق المعرفة…",
     share: "نشر",
     signInToPost: "سجّل الدخول لتشارك مع المجتمع.",
@@ -402,6 +402,12 @@ const ar = {
     attachTrip: "شارك إحدى رحلاتك (اختياري)",
     noTripOption: "بدون رحلة",
     sharedTrip: "رحلة مُشارَكة",
+  },
+  stories: {
+    yourStory: "قصتك",
+    addStory: "أضف قصة",
+    placeholder: "شارك شيئًا يختفي بعد 24 ساعة…",
+    justNow: "الآن",
   },
   sindbadMemory: {
     title: "ما يتذكره سندباد",

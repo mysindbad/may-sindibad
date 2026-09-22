@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { BrandMark } from "@/components/brand/BrandMark";
 
+const AUTH_PATH_PATTERN = /^\/[a-z]{2}\/(login|signup)(\/|$)/;
+
 export function TopBar() {
   const { locale, dict } = useLocale();
   const { user } = useAuth();
+  const pathname = usePathname();
+  const isAuthPage = AUTH_PATH_PATTERN.test(pathname);
 
   return (
     <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-brand-900/8 bg-white/90 px-4 py-3 backdrop-blur md:hidden dark:border-white/10 dark:bg-brand-950/90">
@@ -26,7 +31,7 @@ export function TopBar() {
             </span>
           )}
         </Link>
-      ) : (
+      ) : isAuthPage ? null : (
         <Link href={`/${locale}/login`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-medium text-white">
           {dict.nav.login}
         </Link>

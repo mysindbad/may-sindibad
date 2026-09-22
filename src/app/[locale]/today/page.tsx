@@ -88,7 +88,7 @@ export default async function TodayPage({ params }: { params: Promise<{ locale: 
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.today.title}</h1>
         <div className="text-sm text-slate-500 dark:text-slate-400">
-          {weather ? `${weather.temperatureC}°C · ${weather.condition}` : dict.today.weatherUnavailable}
+          {weather ? `${weather.icon} ${weather.temperatureC}°C · ${weather.condition}` : dict.today.weatherUnavailable}
         </div>
       </div>
 

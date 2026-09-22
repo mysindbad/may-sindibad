@@ -7,7 +7,7 @@ import { updateProfileSchema } from "@/lib/validation";
 import { isUnauthenticatedError, jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
-import { deleteLocalStoredUpload } from "@/lib/storage";
+import { deleteLocalStoredUpload, deleteUpload } from "@/lib/storage";
 import type { BookingStatus } from "@/lib/domain/booking-state-machine";
 
 class ActiveAccountBookingError extends Error {
@@ -27,11 +27,21 @@ export async function PATCH(request: Request) {
     const parsed = updateProfileSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
 
+    const previousAvatarUrl = user.avatarUrl;
+
     const [updated] = await db
       .update(users)
       .set({ ...parsed.data, updatedAt: new Date() })
       .where(eq(users.id, user.id))
       .returning();
+
+    // The new photo is already saved and the account already points at it -
+    // the old file is now unreachable from anywhere in the app, so remove it
+    // rather than leaving it in storage forever. Best-effort: a delete
+    // failure here must not undo an otherwise-successful profile update.
+    if ("avatarUrl" in parsed.data && previousAvatarUrl && previousAvatarUrl !== updated.avatarUrl) {
+      await deleteUpload(previousAvatarUrl).catch(() => {});
+    }
 
     return NextResponse.json({
       user: { id: updated.id, email: updated.email, name: updated.name, role: updated.role, locale: updated.locale, avatarUrl: updated.avatarUrl, homeCity: updated.homeCity },

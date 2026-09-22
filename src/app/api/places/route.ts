@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, gte, ilike, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
 import { db } from "@/db";
 import { places, placeCategories } from "@/db/schema";
 import { jsonError } from "@/lib/api-utils";
@@ -28,8 +28,13 @@ export async function GET(request: Request) {
   const requestedLimit = Number(searchParams.get("limit") ?? 30);
   const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 60) : 30;
   const hasCoordinates = lat !== undefined && lng !== undefined && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  // Lets a caller ask for generally popular places with no location filter
+  // at all - used when a traveller is nowhere near the seeded coverage, so
+  // "nearby" can still fall back to "well regarded" instead of showing
+  // nothing.
+  const recommended = searchParams.get("recommended") === "true";
 
-  if (!city && !q && !hasCoordinates) return jsonError("Provide a city, search query, or coordinates.", 400);
+  if (!city && !q && !hasCoordinates && !recommended) return jsonError("Provide a city, search query, or coordinates.", 400);
 
   const conditions = [eq(places.status, "approved")];
   if (city) conditions.push(ilike(places.city, `%${city}%`));
@@ -89,7 +94,7 @@ export async function GET(request: Request) {
     .leftJoin(placeCategories, eq(places.categoryId, placeCategories.id))
     .where(and(...conditions));
 
-  const rows = hasCoordinates ? await query : await query.limit(limit);
+  const rows = hasCoordinates ? await query : await query.orderBy(desc(places.ratingAverage)).limit(limit);
   if (!hasCoordinates) return NextResponse.json({ places: rows });
 
   const origin = { lat: lat!, lng: lng! };

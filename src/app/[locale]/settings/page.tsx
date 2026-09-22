@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { buildLoginPath } from "@/lib/auth/return-path";
 import { SettingsForm } from "@/components/settings/SettingsForm";
-import { SindbadMemoryPanel } from "@/components/settings/SindbadMemoryPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +14,5 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
   const user = await getCurrentUser();
   if (!user) redirect(buildLoginPath(locale, `/${locale}/settings`));
 
-  return (
-    <>
-      <SettingsForm user={user} />
-      {/* What Sindbad has learned lives with the other account controls, where
-          a traveller can read it and erase it. */}
-      <div className="mx-auto max-w-lg px-4 pb-8">
-        <SindbadMemoryPanel />
-      </div>
-    </>
-  );
+  return <SettingsForm user={user} />;
 }

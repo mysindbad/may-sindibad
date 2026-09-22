@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/primitives";
 import { Skeleton } from "@/components/ui/feedback";
 
 // Memory the traveller cannot see or erase would be surveillance rather than
@@ -55,10 +55,10 @@ export function SindbadMemoryPanel() {
   }
 
   return (
-    <Card className="space-y-3 p-4">
+    <div className="space-y-4">
       <div>
-        <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">🧠 {dict.sindbadMemory.title}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{dict.sindbadMemory.subtitle}</p>
+        <h2 className="text-sm font-semibold text-brand-900 dark:text-slate-200">{dict.sindbadMemory.title}</h2>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.sindbadMemory.subtitle}</p>
       </div>
 
       {memories === null && <Skeleton className="h-16 w-full" />}
@@ -69,7 +69,7 @@ export function SindbadMemoryPanel() {
         <>
           <ul className="space-y-2">
             {memories.map((memory) => (
-              <li key={memory.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3">
+              <li key={memory.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3 dark:bg-white/5">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{memory.key.replace(/_/g, " ")}</p>
                   <p className="text-sm text-brand-950 dark:text-sand-50">{memory.value}</p>
@@ -100,6 +100,6 @@ export function SindbadMemoryPanel() {
       )}
 
       <p className="text-xs text-slate-400">{dict.sindbadMemory.note}</p>
-    </Card>
+    </div>
   );
 }

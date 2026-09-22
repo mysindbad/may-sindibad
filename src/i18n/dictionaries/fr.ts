@@ -85,6 +85,7 @@ const fr = {
     exploreCta: "Explorer la carte",
     communityCta: "Communauté de voyageurs",
     emptyNearby: "Activez la localisation pour voir ce qu'il y a autour de vous.",
+    nearbyFallback: "Aucun lieu répertorié près de vous pour l'instant - voici quelques destinations remarquables",
     enableLocation: "Utiliser ma position",
   },
   explore: {
@@ -232,6 +233,7 @@ const fr = {
     noContributions: "Aucune contribution communautaire pour le moment — soyez le premier.",
     placeName: "Nom du lieu",
     travellerInfo: "Que devraient savoir les autres voyageurs ?",
+    contributeIntro: "Vous ne trouvez pas votre endroit préféré dans le répertoire ? Ajoutez-le pour que d'autres voyageurs en profitent aussi.",
   },
   profile: {
     title: "Profil",
@@ -390,8 +392,6 @@ const fr = {
     captionPlace: "Découvrez des lieux",
     captionTip: "Partagez un conseil",
     captionMoment: "Partagez vos photos",
-    storyTitlePlaceholder: "Titre du récit",
-    storyBodyPlaceholder: "Racontez votre voyage en détail…",
     placeholder: "Partagez un moment, un conseil ou un lieu à connaître…",
     share: "Partager",
     signInToPost: "Connectez-vous pour publier dans la communauté.",
@@ -403,6 +403,12 @@ const fr = {
     attachTrip: "Partager un de vos voyages (facultatif)",
     noTripOption: "Aucun voyage",
     sharedTrip: "Voyage partagé",
+  },
+  stories: {
+    yourStory: "Votre story",
+    addStory: "Ajouter une story",
+    placeholder: "Partagez quelque chose qui disparaît après 24 heures…",
+    justNow: "À l'instant",
   },
   sindbadMemory: {
     title: "Ce que Sindbad retient",

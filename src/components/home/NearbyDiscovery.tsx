@@ -14,6 +14,7 @@ export function NearbyDiscovery() {
   const [status, setStatus] = useState<Status>("idle");
   const [city, setCity] = useState<string | null>(null);
   const [nearby, setNearby] = useState<PlaceCardData[]>([]);
+  const [isFallback, setIsFallback] = useState(false);
 
   async function handleEnableLocation() {
     setStatus("locating");
@@ -43,8 +44,22 @@ export function NearbyDiscovery() {
             data = await res.json();
             if ((data.places?.length ?? 0) > 0) break;
           }
+
+          // Nothing within even the widest radius: the destination simply
+          // isn't covered yet, but the traveller asked to see places, so
+          // show well-regarded ones instead of a dead end.
+          let fallback = false;
+          if ((data.places?.length ?? 0) === 0) {
+            const fallbackRes = await fetch(`/api/places?recommended=true&limit=6`);
+            if (fallbackRes.ok) {
+              data = await fallbackRes.json();
+              fallback = true;
+            }
+          }
+
           setNearby(data.places ?? []);
-          setCity(data.contextCity ?? null);
+          setCity(fallback ? null : (data.contextCity ?? null));
+          setIsFallback(fallback);
           setStatus("ready");
         } catch {
           setStatus("error");
@@ -57,12 +72,15 @@ export function NearbyDiscovery() {
 
   if (status === "idle" || status === "denied" || status === "error") {
     return (
-      <div className="rounded-2xl border border-dashed border-brand-900/15 bg-white/60 p-5 text-center dark:border-white/15 dark:bg-white/5">
+      <div className="rounded-2xl bg-gradient-to-br from-sky-500/10 to-turquoise-500/10 p-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm dark:bg-brand-900">
+          <span aria-hidden="true">📍</span>
+        </div>
         <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
           {status === "denied" ? dict.errors.forbidden : status === "error" ? dict.common.somethingWentWrong : dict.home.emptyNearby}
         </p>
-        <Button variant="secondary" size="sm" onClick={handleEnableLocation}>
-          <span aria-hidden="true">📍</span> {dict.home.enableLocation}
+        <Button variant="primary" size="sm" onClick={handleEnableLocation}>
+          {dict.home.enableLocation}
         </Button>
       </div>
     );
@@ -82,7 +100,11 @@ export function NearbyDiscovery() {
 
   return (
     <div>
-      {city && <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{city}</p>}
+      {isFallback ? (
+        <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{dict.home.nearbyFallback}</p>
+      ) : (
+        city && <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{city}</p>
+      )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {nearby.map((place) => (
           <PlaceCard key={place.id} place={place} locale={locale} trustLabel={placeTrustLabel(place.sourceType, dict)} />

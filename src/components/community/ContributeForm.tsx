@@ -66,7 +66,7 @@ export function ContributeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-brand-900">
       <div>
         <Label htmlFor="contribution-place-name">{dict.community.placeName}</Label>
         <Input id="contribution-place-name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} />
@@ -85,7 +85,7 @@ export function ContributeForm() {
         <Label htmlFor="contribution-info">{dict.community.travellerInfo}</Label>
         <Textarea id="contribution-info" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
-      <p className="text-xs text-slate-400">{dict.community.trustNotice}</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500">{dict.community.trustNotice}</p>
       {result && <InlineAlert tone={result.tone}>{result.text}</InlineAlert>}
       <Button type="submit" loading={busy}>
         {dict.community.contribute}

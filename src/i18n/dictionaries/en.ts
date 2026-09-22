@@ -83,6 +83,7 @@ const en = {
     exploreCta: "Explore the map",
     communityCta: "Traveller community",
     emptyNearby: "Turn on location to see what's around you.",
+    nearbyFallback: "No listed places near you yet - here are some notable destinations",
     enableLocation: "Use my location",
   },
   explore: {
@@ -229,6 +230,7 @@ const en = {
     noContributions: "No community contributions yet — be the first.",
     placeName: "Place name",
     travellerInfo: "What should other travellers know?",
+    contributeIntro: "Can't find your favourite spot in the directory? Add it so other travellers can benefit too.",
   },
   profile: {
     title: "Profile",
@@ -387,8 +389,6 @@ const en = {
     captionPlace: "Discover places",
     captionTip: "Share a tip",
     captionMoment: "Share photos",
-    storyTitlePlaceholder: "Story title",
-    storyBodyPlaceholder: "Tell your travel story in full…",
     placeholder: "Share a moment, a tip, or a place worth knowing…",
     share: "Share",
     signInToPost: "Sign in to post to the community.",
@@ -400,6 +400,12 @@ const en = {
     attachTrip: "Share one of your trips (optional)",
     noTripOption: "No trip",
     sharedTrip: "Shared trip",
+  },
+  stories: {
+    yourStory: "Your story",
+    addStory: "Add a story",
+    placeholder: "Share something that disappears in 24 hours…",
+    justNow: "Just now",
   },
   sindbadMemory: {
     title: "What Sindbad remembers",

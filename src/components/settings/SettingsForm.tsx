@@ -8,6 +8,7 @@ import { Button, Input, Label } from "@/components/ui/primitives";
 import { ConfirmButton, InlineAlert } from "@/components/ui/feedback";
 import { buildLoginPath } from "@/lib/auth/return-path";
 import { AppearanceSettings } from "./AppearanceSettings";
+import { SindbadMemoryPanel } from "./SindbadMemoryPanel";
 
 export function SettingsForm({ user }: { user: SessionUser }) {
   const { dict, locale } = useLocale();
@@ -155,6 +156,10 @@ export function SettingsForm({ user }: { user: SessionUser }) {
 
       <div className="border-t border-slate-200 pt-5 dark:border-white/10">
         <AppearanceSettings />
+      </div>
+
+      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
+        <SindbadMemoryPanel />
       </div>
 
       <div className="border-t border-slate-200 pt-5 dark:border-white/10">

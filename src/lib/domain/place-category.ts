@@ -15,7 +15,7 @@ const CATEGORY_STYLES: Record<string, PlaceCategoryStyle> = {
   cafe: { icon: "☕", gradient: "from-amber-700 to-amber-400", solidColor: "#b45309" },
   restaurant: { icon: "🍽️", gradient: "from-rose-600 to-orange-400", solidColor: "#e11d48" },
   hotel: { icon: "🛏️", gradient: "from-violet-700 to-fuchsia-500", solidColor: "#7c3aed" },
-  attraction: { icon: "🕌", gradient: "from-amber-600 to-yellow-400", solidColor: "#d97706" },
+  attraction: { icon: "🏛️", gradient: "from-amber-600 to-yellow-400", solidColor: "#d97706" },
   activity: { icon: "🎯", gradient: "from-turquoise-500 to-turquoise-400", solidColor: "#1fb8a3" },
   tour: { icon: "🧭", gradient: "from-lime-500 to-lime-300", solidColor: "#65a30d" },
   transport: { icon: "🚗", gradient: "from-slate-600 to-slate-400", solidColor: "#475569" },

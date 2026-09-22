@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { communityPosts, media, places, trips, users } from "@/db/schema";
@@ -15,24 +15,22 @@ import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const createSchema = z
-  .object({
-    kind: z.enum(["moment", "tip", "place", "story"]).default("moment"),
-    title: z.string().trim().min(1).max(140).optional(),
-    body: z.string().trim().min(2).max(4000),
-    placeId: z.string().uuid().optional(),
-    tripId: z.string().uuid().optional(),
-    city: z.string().trim().max(120).optional(),
-    country: z.string().trim().max(120).optional(),
-  })
-  .refine((data) => data.kind !== "story" || Boolean(data.title), {
-    message: "A story needs a title.",
-    path: ["title"],
-  });
+const createSchema = z.object({
+  kind: z.enum(["moment", "tip", "place", "story"]).default("moment"),
+  title: z.string().trim().min(1).max(140).optional(),
+  body: z.string().trim().min(2).max(4000),
+  placeId: z.string().uuid().optional(),
+  tripId: z.string().uuid().optional(),
+  city: z.string().trim().max(120).optional(),
+  country: z.string().trim().max(120).optional(),
+});
 
 export async function GET() {
-  // Only published posts are ever served. Flagged or removed posts stay
-  // invisible to everyone except moderation queries.
+  // Only published posts are ever served, and stories never appear in the
+  // regular feed - they live in their own tray/viewer (see
+  // /api/community/stories) and disappear after 24h instead of scrolling
+  // away, so mixing them in here would show the same post in two places
+  // with two different lifetimes.
   const rows = await db
     .select({
       id: communityPosts.id,
@@ -60,7 +58,7 @@ export async function GET() {
     .innerJoin(users, eq(communityPosts.userId, users.id))
     .leftJoin(places, eq(communityPosts.placeId, places.id))
     .leftJoin(trips, eq(communityPosts.tripId, trips.id))
-    .where(eq(communityPosts.status, "published"))
+    .where(and(eq(communityPosts.status, "published"), ne(communityPosts.kind, "story")))
     .orderBy(desc(communityPosts.createdAt))
     .limit(50);
 

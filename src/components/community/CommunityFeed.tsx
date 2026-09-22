@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Badge, Button, Card, Input, Select, Textarea } from "@/components/ui/primitives";
+import { Badge, Button, Card, Select, Textarea } from "@/components/ui/primitives";
 import { EmptyState, InlineAlert, Skeleton } from "@/components/ui/feedback";
 import { AddToTripButton } from "@/components/trips/AddToTripButton";
 
@@ -36,13 +36,12 @@ interface MyTrip {
   destinationCountry: string;
 }
 
-const KINDS = ["moment", "tip", "place", "story"] as const;
+const KINDS = ["moment", "tip", "place"] as const;
 
 export function CommunityFeed() {
   const { dict } = useLocale();
   const { user } = useAuth();
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
-  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("moment");
   const [myTrips, setMyTrips] = useState<MyTrip[]>([]);
@@ -96,7 +95,7 @@ export function CommunityFeed() {
       const res = await fetch("/api/community/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, title: kind === "story" ? title : undefined, body, tripId: tripId || undefined }),
+        body: JSON.stringify({ kind, body, tripId: tripId || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -116,7 +115,6 @@ export function CommunityFeed() {
         }
       }
 
-      setTitle("");
       setBody("");
       setTripId("");
       clearPhoto();
@@ -162,26 +160,15 @@ export function CommunityFeed() {
               <option value="moment">{dict.communityFeed.kindMoment}</option>
               <option value="tip">{dict.communityFeed.kindTip}</option>
               <option value="place">{dict.communityFeed.kindPlace}</option>
-              <option value="story">{dict.communityFeed.kindStory}</option>
             </Select>
-            {kind === "story" && (
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={140}
-                placeholder={dict.communityFeed.storyTitlePlaceholder}
-                aria-label={dict.communityFeed.storyTitlePlaceholder}
-              />
-            )}
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={kind === "story" ? 8 : 3}
+              rows={3}
               required
               minLength={2}
               maxLength={4000}
-              placeholder={kind === "story" ? dict.communityFeed.storyBodyPlaceholder : dict.communityFeed.placeholder}
+              placeholder={dict.communityFeed.placeholder}
               aria-label={dict.communityFeed.placeholder}
             />
 
@@ -214,7 +201,7 @@ export function CommunityFeed() {
               ) : (
                 <label
                   htmlFor="community-photo-input"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/20 dark:text-slate-300 dark:hover:bg-white/5"
                 >
                   📷 {dict.communityFeed.addPhoto}
                 </label>
@@ -258,13 +245,7 @@ export function CommunityFeed() {
                     )}
                   </div>
                   <Badge tone="sky">
-                    {post.kind === "tip"
-                      ? dict.communityFeed.kindTip
-                      : post.kind === "place"
-                        ? dict.communityFeed.kindPlace
-                        : post.kind === "story"
-                          ? dict.communityFeed.kindStory
-                          : dict.communityFeed.kindMoment}
+                    {post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : dict.communityFeed.kindMoment}
                   </Badge>
                 </div>
 
@@ -273,9 +254,6 @@ export function CommunityFeed() {
                   <img src={post.imageUrl} alt="" className="-mx-4 h-48 w-[calc(100%+2rem)] object-cover" />
                 )}
 
-                {post.kind === "story" && post.title && (
-                  <h3 className="text-base font-semibold text-brand-950 dark:text-sand-50">{post.title}</h3>
-                )}
                 <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{post.body}</p>
 
                 {post.trip && (

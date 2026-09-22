@@ -85,6 +85,7 @@ const de = {
     exploreCta: "Karte entdecken",
     communityCta: "Reise-Community",
     emptyNearby: "Aktiviere den Standort, um zu sehen, was in der Nähe ist.",
+    nearbyFallback: "Noch keine gelisteten Orte in deiner Nähe - hier sind einige besonders empfehlenswerte Ziele",
     enableLocation: "Meinen Standort verwenden",
   },
   explore: {
@@ -232,6 +233,7 @@ const de = {
     noContributions: "Noch keine Community-Beiträge — sei der Erste.",
     placeName: "Name des Ortes",
     travellerInfo: "Was sollten andere Reisende wissen?",
+    contributeIntro: "Fehlt dein Lieblingsort im Verzeichnis? Füge ihn hinzu, damit auch andere Reisende davon profitieren.",
   },
   profile: {
     title: "Profil",
@@ -390,8 +392,6 @@ const de = {
     captionPlace: "Entdecke Orte",
     captionTip: "Teile einen Tipp",
     captionMoment: "Teile deine Fotos",
-    storyTitlePlaceholder: "Titel der Geschichte",
-    storyBodyPlaceholder: "Erzähle deine Reisegeschichte ausführlich…",
     placeholder: "Teile einen Moment, einen Tipp oder einen Ort, den man kennen sollte…",
     share: "Teilen",
     signInToPost: "Melde dich an, um in der Community zu posten.",
@@ -403,6 +403,12 @@ const de = {
     attachTrip: "Teile eine deiner Reisen (optional)",
     noTripOption: "Keine Reise",
     sharedTrip: "Geteilte Reise",
+  },
+  stories: {
+    yourStory: "Deine Story",
+    addStory: "Story hinzufügen",
+    placeholder: "Teile etwas, das nach 24 Stunden verschwindet…",
+    justNow: "Gerade eben",
   },
   sindbadMemory: {
     title: "Was Sindbad sich merkt",
