@@ -145,7 +145,7 @@ export const reviewCreateSchema = z
   });
 
 export const reportCreateSchema = z.object({
-  targetType: z.enum(["place", "provider", "review", "contribution", "user"]),
+  targetType: z.enum(["place", "provider", "review", "contribution", "user", "community_post"]),
   targetId: z.string().uuid(),
   reason: z.enum(["spam", "inaccurate", "offensive", "duplicate", "closed", "other"]),
   details: z.string().max(1000).optional(),

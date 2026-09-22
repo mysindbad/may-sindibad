@@ -15,6 +15,7 @@ import {
   type GoogleUserInfo,
 } from "@/lib/auth/google";
 import { migrateGuestDataToUser } from "@/lib/auth/migrate";
+import { maybeBootstrapFirstAdmin } from "@/lib/auth/admin-bootstrap";
 import { sanitizeReturnPath } from "@/lib/auth/return-path";
 import { createSession } from "@/lib/auth/session";
 import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
@@ -171,6 +172,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (guestId) await clearGuestId();
+
+    // Owner-configured, one-time-only: see lib/auth/admin-bootstrap.
+    await maybeBootstrapFirstAdmin(user.id, user.email);
 
     return clearOAuthCookies(NextResponse.redirect(new URL(returnPath, appOrigin)));
   } catch (error) {

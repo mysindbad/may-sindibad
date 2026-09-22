@@ -546,6 +546,59 @@ export const aiMessages = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Community posts
+//
+// Short travel moments, tips and place recommendations. Not a social network:
+// a post exists so another traveller can act on it, which is why placeId is a
+// real reference — a post about a place can go straight into someone's trip
+// through the same trip layer the rest of the app uses.
+// ---------------------------------------------------------------------------
+export const communityPosts = pgTable(
+  "community_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 20 }).notNull().default("moment"),
+    body: text("body").notNull(),
+    placeId: uuid("place_id").references(() => places.id, { onDelete: "set null" }),
+    city: varchar("city", { length: 120 }),
+    country: varchar("country", { length: 120 }),
+    status: varchar("status", { length: 20 }).notNull().default("published"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("community_posts_user_idx").on(t.userId), index("community_posts_status_idx").on(t.status)],
+);
+
+// ---------------------------------------------------------------------------
+// Sindbad's long-term memory of the traveller
+//
+// Durable facts about a person (how they travel, who with, what they avoid),
+// never facts about the world (prices, weather, opening hours) which go stale
+// and would otherwise be quoted back later as if still true.
+// ---------------------------------------------------------------------------
+export const userMemories = pgTable(
+  "user_memories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 32 }).notNull(),
+    memoryKey: varchar("memory_key", { length: 80 }).notNull(),
+    value: text("value").notNull(),
+    source: varchar("source", { length: 16 }).notNull().default("stated"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("user_memories_user_idx").on(t.userId),
+    unique("user_memories_user_key_unique").on(t.userId, t.kind, t.memoryKey),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Sponsored content (advertising foundation)
 // ---------------------------------------------------------------------------
 export const sponsoredPlacements = pgTable("sponsored_placements", {

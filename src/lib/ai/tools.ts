@@ -7,6 +7,7 @@ import { escapeLikePattern, normalizeAiToolText } from "./tool-input";
 import type { OwnerContext } from "@/lib/auth/owner-context";
 import { addPlaceToTrip, moveItineraryItem, removeItineraryItem, summarizeTripBudget } from "@/lib/trips/actions";
 import { loadOwnedTrip } from "@/lib/trips/ownership";
+import { forgetMemory, isMemoryKind, listMemories, rememberPreference, MEMORY_KINDS } from "@/lib/memory/user-memory";
 
 // Tool-calling scaffold: Sindbad AI works on the traveller's real trip instead
 // of describing changes it cannot make.
@@ -91,6 +92,37 @@ export const AI_TOOLS: AiToolDefinition[] = [
         dayIndex: { type: "number", description: "Zero-based day number to move the activity to" },
       },
       required: ["itemId", "dayIndex"],
+    },
+  },
+  {
+    name: "remember_preference",
+    description:
+      "Save one lasting fact about how this traveller likes to travel, so future trips start from what they already told you. Only durable personal facts: travel style, cuisines or place types they like or avoid, who they usually travel with, their usual budget level, requirements such as accessibility or halal food. Never store prices, opening hours, weather, availability or anything about a specific date - those change and must be looked up live.",
+    parameters: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          description: "One of: preference, interest, avoid, companion, budget_style, constraint",
+        },
+        key: { type: "string", description: "Short stable label, e.g. cuisine, pace, travels_with, budget_level" },
+        value: { type: "string", description: "The preference in the traveller's own terms, under 200 characters" },
+      },
+      required: ["kind", "key", "value"],
+    },
+  },
+  {
+    name: "list_preferences",
+    description: "List what is already remembered about this traveller, with the ids needed to forget any of them.",
+    parameters: { type: "object", properties: {}, required: [] },
+  },
+  {
+    name: "forget_preference",
+    description: "Forget one remembered preference, using the id from list_preferences. Use whenever the traveller asks you to forget something.",
+    parameters: {
+      type: "object",
+      properties: { memoryId: { type: "string", description: "Memory id from list_preferences" } },
+      required: ["memoryId"],
     },
   },
 ];
@@ -269,6 +301,57 @@ export async function executeTool(
     const result = await moveItineraryItem({ itemId, toDayIndex: dayIndex, owner });
     if (!result.ok) return { error: ACTION_MESSAGE[result.error] ?? "That change could not be applied." };
     return { moved: { itemId: result.data.id, dayIndex: result.data.dayIndex, date: result.data.date } };
+  }
+
+  // Memory belongs to an account. A guest has no stable identity to attach
+  // lasting preferences to, so nothing is written for one.
+  if (name === "remember_preference") {
+    if (!owner.userId) return { error: "Only a signed-in traveller has a saved profile. Invite them to create an account first." };
+
+    const kindInput = normalizeAiToolText(args.kind, 32, true);
+    const keyInput = normalizeAiToolText(args.key, 80, true);
+    const valueInput = normalizeAiToolText(args.value, 200, true);
+    if (!kindInput.ok || !kindInput.value) return { error: "kind is required." };
+    if (!keyInput.ok || !keyInput.value) return { error: "key is required." };
+    if (!valueInput.ok || !valueInput.value) return { error: "value is required." };
+
+    const kind = kindInput.value;
+    const key = keyInput.value;
+    const value = valueInput.value;
+    if (!isMemoryKind(kind)) return { error: "kind must be one of: " + MEMORY_KINDS.join(", ") };
+
+    const result = await rememberPreference({ userId: owner.userId, kind, key, value });
+
+    if (!result.ok) {
+      if (result.reason === "world_fact") {
+        return {
+          error:
+            "That looks like a fact about the world (a price, opening time, weather or a specific date) rather than a lasting preference. Those are looked up live and must not be remembered.",
+        };
+      }
+      if (result.reason === "limit_reached") {
+        return { error: "This traveller's profile is full. Forget an old preference before saving a new one." };
+      }
+      return { error: "That preference could not be saved." };
+    }
+
+    return { remembered: { id: result.memory.id, key: result.memory.key, value: result.memory.value, replaced: result.replaced } };
+  }
+
+  if (name === "list_preferences") {
+    if (!owner.userId) return { preferences: [], note: "This traveller is browsing as a guest, so nothing is remembered yet." };
+    const memories = await listMemories(owner.userId);
+    return {
+      preferences: memories.map((memory) => ({ id: memory.id, kind: memory.kind, key: memory.key, value: memory.value })),
+    };
+  }
+
+  if (name === "forget_preference") {
+    if (!owner.userId) return { error: "Nothing is remembered for a guest." };
+    const memoryId = readId(args.memoryId);
+    if (!memoryId) return { error: "memoryId must be an id returned by list_preferences." };
+    const removed = await forgetMemory(owner.userId, memoryId);
+    return removed ? { forgotten: memoryId } : { error: "That preference was not found." };
   }
 
   return { error: "Unknown tool: " + name };

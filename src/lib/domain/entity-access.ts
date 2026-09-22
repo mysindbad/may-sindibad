@@ -1,10 +1,10 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { contributions, places, providers, reviews, users } from "@/db/schema";
+import { communityPosts, contributions, places, providers, reviews, users } from "@/db/schema";
 
 export type UploadOwnerType = "place" | "provider" | "review" | "contribution" | "avatar";
-export type ReportTargetType = "place" | "provider" | "review" | "contribution" | "user";
+export type ReportTargetType = "place" | "provider" | "review" | "contribution" | "user" | "community_post";
 export type FavoriteTargetType = "place" | "provider";
 
 export async function resolveAuthorizedUploadOwner(userId: string, ownerType: UploadOwnerType, ownerId?: string): Promise<string | null> {
@@ -96,6 +96,10 @@ export async function targetExists(targetType: ReportTargetType | FavoriteTarget
   }
   if (targetType === "user") {
     const [row] = await db.select({ id: users.id }).from(users).where(eq(users.id, targetId)).limit(1);
+    return Boolean(row);
+  }
+  if (targetType === "community_post") {
+    const [row] = await db.select({ id: communityPosts.id }).from(communityPosts).where(eq(communityPosts.id, targetId)).limit(1);
     return Boolean(row);
   }
   return false;

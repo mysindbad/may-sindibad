@@ -8,6 +8,7 @@ import { contributions } from "@/db/schema";
 import { Badge, Card } from "@/components/ui/primitives";
 import { ContributeForm } from "@/components/community/ContributeForm";
 import { ConfirmContributionButton } from "@/components/community/ConfirmContributionButton";
+import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { trustLabel } from "@/lib/domain/community-trust";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,13 @@ export default async function CommunityPage({ params }: { params: Promise<{ loca
         <h1 className="text-xl font-semibold text-brand-950">{dict.community.title}</h1>
         <p className="text-sm text-slate-500">{dict.community.subtitle}</p>
       </div>
+
+      {/* Travel moments, tips and place recommendations that other travellers
+          can act on straight away. */}
+      <section>
+        <h2 className="mb-3 text-base font-semibold text-brand-950">{dict.communityFeed.title}</h2>
+        <CommunityFeed />
+      </section>
 
       <ContributeForm />
 

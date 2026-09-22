@@ -80,6 +80,23 @@ export async function saveUpload(buffer: Buffer, mimeType: string, ownerType: st
   return { url: `/uploads/${safeOwnerType}/${safeOwnerId}/${filename}`, path: fullPath };
 }
 
+/**
+ * Remove a stored file, whichever adapter wrote it.
+ *
+ * The seam the object-storage adapter plugs into: a remote URL is recognised
+ * here and handed to that adapter once one is configured. Until then a remote
+ * URL cannot exist, because saveUpload refuses to write in production, so the
+ * local branch is the only reachable one. Callers treat deletion as
+ * best-effort — the database row is what makes media visible.
+ */
+export async function deleteUpload(url: string): Promise<void> {
+  if (url.startsWith("/uploads/")) {
+    await deleteLocalStoredUpload(url);
+    return;
+  }
+  // Remote object storage is not configured; nothing else can have written it.
+}
+
 /** Best-effort cleanup for files created by the local filesystem adapter. */
 export async function deleteLocalStoredUpload(url: string): Promise<void> {
   if (!url.startsWith("/uploads/")) return;

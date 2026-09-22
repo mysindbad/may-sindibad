@@ -7,6 +7,7 @@ import { consumePasswordVerificationWork, hashPassword, passwordHashNeedsUpgrade
 import { createSession } from "@/lib/auth/session";
 import { getGuestId, clearGuestId } from "@/lib/auth/guest";
 import { migrateGuestDataToUser } from "@/lib/auth/migrate";
+import { maybeBootstrapFirstAdmin } from "@/lib/auth/admin-bootstrap";
 import { jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
@@ -71,7 +72,11 @@ export async function POST(request: Request) {
 
   if (guestId) await clearGuestId();
 
+  // Owner-configured, one-time-only: see lib/auth/admin-bootstrap.
+  const promoted = await maybeBootstrapFirstAdmin(user.id, user.email);
+  const role = promoted ? "admin" : user.role;
+
   return NextResponse.json({
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, locale: user.locale, avatarUrl: user.avatarUrl, homeCity: user.homeCity },
+    user: { id: user.id, email: user.email, name: user.name, role, locale: user.locale, avatarUrl: user.avatarUrl, homeCity: user.homeCity },
   });
 }

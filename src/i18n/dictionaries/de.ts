@@ -370,6 +370,28 @@ const de = {
     noBudget: "Für diese Reise ist kein Budget festgelegt.",
     estimateNote: "Geplante Beträge sind Schätzungen, keine bestätigten Preise.",
   },
+  communityFeed: {
+    title: "Reise-Feed",
+    kind: "Art des Beitrags",
+    kindMoment: "Moment",
+    kindTip: "Tipp",
+    kindPlace: "Ort",
+    placeholder: "Teile einen Moment, einen Tipp oder einen Ort, den man kennen sollte…",
+    share: "Teilen",
+    signInToPost: "Melde dich an, um in der Community zu posten.",
+    empty: "Noch nichts geteilt.",
+    emptyBody: "Teile als Erste:r einen Moment oder einen Tipp von unterwegs.",
+    removeConfirm: "Diesen Beitrag entfernen?",
+  },
+  sindbadMemory: {
+    title: "Was Sindbad sich merkt",
+    subtitle: "Dauerhafte Vorlieben, mit denen Sindbad Vorschläge persönlich macht.",
+    empty: "Sindbad hat noch nichts über dich gelernt.",
+    forget: "Vergessen",
+    forgetAll: "Alles vergessen",
+    forgetAllConfirm: "Alles löschen, was Sindbad über dich weiß?",
+    note: "Sindbad merkt sich nur, wie du reist — nie Preise, Öffnungszeiten oder Wetter, die immer frisch abgefragt werden.",
+  },
 } satisfies Dictionary;
 
 export default de;

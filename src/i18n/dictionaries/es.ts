@@ -370,6 +370,28 @@ const es = {
     noBudget: "No hay presupuesto para este viaje.",
     estimateNote: "Las cifras previstas son estimaciones, no precios confirmados.",
   },
+  communityFeed: {
+    title: "Muro de viajeros",
+    kind: "Tipo de publicación",
+    kindMoment: "Momento",
+    kindTip: "Consejo",
+    kindPlace: "Lugar",
+    placeholder: "Comparte un momento, un consejo o un lugar que merezca la pena…",
+    share: "Compartir",
+    signInToPost: "Inicia sesión para publicar en la comunidad.",
+    empty: "Todavía no hay publicaciones.",
+    emptyBody: "Sé el primero en compartir un momento o un consejo del viaje.",
+    removeConfirm: "¿Eliminar esta publicación?",
+  },
+  sindbadMemory: {
+    title: "Lo que Sindbad recuerda",
+    subtitle: "Preferencias duraderas que Sindbad usa para personalizar sus sugerencias.",
+    empty: "Sindbad aún no ha aprendido nada sobre ti.",
+    forget: "Olvidar",
+    forgetAll: "Olvidarlo todo",
+    forgetAllConfirm: "¿Borrar todo lo que Sindbad recuerda de ti?",
+    note: "Sindbad solo recuerda cómo te gusta viajar, nunca precios, horarios ni el tiempo, que siempre se consultan al momento.",
+  },
 } satisfies Dictionary;
 
 export default es;

@@ -366,6 +366,28 @@ const en = {
     noBudget: "No budget set for this trip.",
     estimateNote: "Planned figures are estimates, not confirmed prices.",
   },
+  communityFeed: {
+    title: "Travel feed",
+    kind: "Type of post",
+    kindMoment: "Moment",
+    kindTip: "Tip",
+    kindPlace: "Place",
+    placeholder: "Share a moment, a tip, or a place worth knowing…",
+    share: "Share",
+    signInToPost: "Sign in to post to the community.",
+    empty: "Nothing shared yet.",
+    emptyBody: "Be the first to share a moment or a tip from the road.",
+    removeConfirm: "Remove this post?",
+  },
+  sindbadMemory: {
+    title: "What Sindbad remembers",
+    subtitle: "Lasting preferences Sindbad uses to make suggestions personal.",
+    empty: "Sindbad has not learned anything about you yet.",
+    forget: "Forget",
+    forgetAll: "Forget everything",
+    forgetAllConfirm: "Forget everything Sindbad remembers about you?",
+    note: "Sindbad only remembers how you like to travel — never prices, opening hours or weather, which are always looked up fresh.",
+  },
 } as const;
 
 export default en;
