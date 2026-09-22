@@ -83,9 +83,10 @@ export async function GET(request: Request) {
       sourceType: places.sourceType,
       status: places.status,
       confirmationsCount: places.confirmationsCount,
-      categoryId: places.categoryId,
+      category: placeCategories.slug,
     })
     .from(places)
+    .leftJoin(placeCategories, eq(places.categoryId, placeCategories.id))
     .where(and(...conditions));
 
   const rows = hasCoordinates ? await query : await query.limit(limit);

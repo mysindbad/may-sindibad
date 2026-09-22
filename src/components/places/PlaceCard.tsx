@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge, Card } from "@/components/ui/primitives";
+import { placeCategoryStyle } from "@/lib/domain/place-category";
 
 export interface PlaceCardData {
   id: string;
@@ -14,6 +15,7 @@ export interface PlaceCardData {
   ratingCount: number;
   sourceType: "seed" | "community" | "provider" | "verified";
   coverImageUrl?: string | null;
+  category?: string | null;
 }
 
 const TRUST_TONE = {
@@ -24,7 +26,7 @@ const TRUST_TONE = {
 } as const;
 
 export function PlaceCard({ place, locale, trustLabel }: { place: PlaceCardData; locale: string; trustLabel: string }) {
-  const category = categoryFor(place);
+  const category = placeCategoryStyle(place.category, place.name);
   return (
     <Link href={`/${locale}/explore/${place.id}`} className="block">
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-[var(--shadow-elevated)]">
@@ -57,26 +59,3 @@ export function PlaceCard({ place, locale, trustLabel }: { place: PlaceCardData;
   );
 }
 
-interface PlaceCategoryStyle {
-  icon: string;
-  gradient: string;
-}
-
-const CATEGORY_STYLES: Record<string, PlaceCategoryStyle> = {
-  beach: { icon: "🏖️", gradient: "from-sky-500 to-cyan-400" },
-  cafe: { icon: "☕", gradient: "from-amber-700 to-amber-400" },
-  restaurant: { icon: "🍽️", gradient: "from-rose-600 to-orange-400" },
-  hotel: { icon: "🛏️", gradient: "from-violet-700 to-fuchsia-500" },
-  landmark: { icon: "🕌", gradient: "from-amber-600 to-yellow-400" },
-  default: { icon: "📍", gradient: "from-brand-800 to-sky-500" },
-};
-
-function categoryFor(place: { name: string }): PlaceCategoryStyle {
-  const key = place.name.toLowerCase();
-  if (key.includes("beach") || key.includes("plage")) return CATEGORY_STYLES.beach;
-  if (key.includes("café") || key.includes("cafe") || key.includes("coffee")) return CATEGORY_STYLES.cafe;
-  if (key.includes("restaurant") || key.includes("resto")) return CATEGORY_STYLES.restaurant;
-  if (key.includes("riad") || key.includes("hotel")) return CATEGORY_STYLES.hotel;
-  if (key.includes("mosque") || key.includes("kasbah") || key.includes("garden")) return CATEGORY_STYLES.landmark;
-  return CATEGORY_STYLES.default;
-}

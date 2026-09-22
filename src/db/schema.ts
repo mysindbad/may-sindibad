@@ -563,12 +563,17 @@ export const communityPosts = pgTable(
     kind: varchar("kind", { length: 20 }).notNull().default("moment"),
     body: text("body").notNull(),
     placeId: uuid("place_id").references(() => places.id, { onDelete: "set null" }),
+    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),
     city: varchar("city", { length: 120 }),
     country: varchar("country", { length: 120 }),
     status: varchar("status", { length: 20 }).notNull().default("published"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("community_posts_user_idx").on(t.userId), index("community_posts_status_idx").on(t.status)],
+  (t) => [
+    index("community_posts_user_idx").on(t.userId),
+    index("community_posts_status_idx").on(t.status),
+    index("community_posts_trip_idx").on(t.tripId),
+  ],
 );
 
 // ---------------------------------------------------------------------------

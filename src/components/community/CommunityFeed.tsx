@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Badge, Button, Card, Select, Textarea } from "@/components/ui/primitives";
@@ -10,6 +10,9 @@ import { AddToTripButton } from "@/components/trips/AddToTripButton";
 // The community exists to serve trips, so every post that names a place
 // carries the same add-to-trip action used in Explore and on the map. What a
 // traveller finds here lands in their plan through the one trip layer.
+// A post can also showcase one of the traveller's own trips (destination and
+// dates only, never the itinerary itself, which stays private) and a photo,
+// so this feels like a real travel feed rather than a text-only guestbook.
 
 interface FeedPost {
   id: string;
@@ -20,7 +23,16 @@ interface FeedPost {
   createdAt: string;
   authorName: string;
   isMine: boolean;
+  imageUrl: string | null;
   place: { id: string; name: string; city: string; country: string } | null;
+  trip: { title: string; destinationCity: string; destinationCountry: string; startDate: string; endDate: string } | null;
+}
+
+interface MyTrip {
+  id: string;
+  title: string;
+  destinationCity: string;
+  destinationCountry: string;
 }
 
 const KINDS = ["moment", "tip", "place"] as const;
@@ -31,6 +43,11 @@ export function CommunityFeed() {
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("moment");
+  const [myTrips, setMyTrips] = useState<MyTrip[]>([]);
+  const [tripId, setTripId] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reported, setReported] = useState<Record<string, boolean>>({});
@@ -49,6 +66,26 @@ export function CommunityFeed() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/trips")
+      .then((res) => res.json())
+      .then((data: { trips?: MyTrip[] }) => setMyTrips(data.trips ?? []))
+      .catch(() => {});
+  }, [user]);
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setPhotoFile(file);
+    setPhotoPreview(file ? URL.createObjectURL(file) : null);
+  }
+
+  function clearPhoto() {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -57,14 +94,29 @@ export function CommunityFeed() {
       const res = await fetch("/api/community/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, body }),
+        body: JSON.stringify({ kind, body, tripId: tripId || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error ?? dict.common.somethingWentWrong);
         return;
       }
+
+      if (photoFile) {
+        const form = new FormData();
+        form.append("file", photoFile);
+        form.append("ownerType", "community_post");
+        form.append("ownerId", data.post.id);
+        const uploadRes = await fetch("/api/uploads", { method: "POST", body: form });
+        if (!uploadRes.ok) {
+          const uploadData = await uploadRes.json().catch(() => ({}));
+          setError(uploadData.error ?? dict.common.somethingWentWrong);
+        }
+      }
+
       setBody("");
+      setTripId("");
+      clearPhoto();
       await load();
     } catch {
       setError(dict.errors.network);
@@ -118,6 +170,43 @@ export function CommunityFeed() {
               placeholder={dict.communityFeed.placeholder}
               aria-label={dict.communityFeed.placeholder}
             />
+
+            {myTrips.length > 0 && (
+              <Select value={tripId} onChange={(e) => setTripId(e.target.value)} aria-label={dict.communityFeed.attachTrip}>
+                <option value="">{dict.communityFeed.noTripOption}</option>
+                {myTrips.map((trip) => (
+                  <option key={trip.id} value={trip.id}>
+                    {trip.title} — {trip.destinationCity}
+                  </option>
+                ))}
+              </Select>
+            )}
+
+            <div>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="community-photo-input" />
+              {photoPreview ? (
+                <div className="relative inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview before upload, not a remote image */}
+                  <img src={photoPreview} alt="" className="h-24 w-24 rounded-xl object-cover" />
+                  <button
+                    type="button"
+                    onClick={clearPhoto}
+                    aria-label={dict.communityFeed.removePhoto}
+                    className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-950 text-xs text-white shadow-[var(--shadow-card)]"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="community-photo-input"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  📷 {dict.communityFeed.addPhoto}
+                </label>
+              )}
+            </div>
+
             {error && <InlineAlert tone="error">{error}</InlineAlert>}
             <Button type="submit" size="sm" loading={busy}>
               {dict.communityFeed.share}
@@ -143,7 +232,7 @@ export function CommunityFeed() {
         <ul className="space-y-3">
           {posts.map((post) => (
             <li key={post.id}>
-              <Card className="space-y-2 p-4">
+              <Card className="space-y-2 overflow-hidden p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-brand-950">{post.authorName}</p>
@@ -163,7 +252,20 @@ export function CommunityFeed() {
                   </Badge>
                 </div>
 
+                {post.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                  <img src={post.imageUrl} alt="" className="-mx-4 h-48 w-[calc(100%+2rem)] object-cover" />
+                )}
+
                 <p className="whitespace-pre-line text-sm text-slate-700">{post.body}</p>
+
+                {post.trip && (
+                  <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-sky-500/5 px-3 py-2 text-xs font-medium text-brand-800">
+                    <span aria-hidden="true">🧳</span>
+                    {dict.communityFeed.sharedTrip}: {post.trip.title} — {post.trip.destinationCity}, {post.trip.destinationCountry} ·{" "}
+                    {post.trip.startDate} → {post.trip.endDate}
+                  </div>
+                )}
 
                 {post.place && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">

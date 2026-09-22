@@ -256,6 +256,9 @@ export async function executeTool(
       .where(and(...conditions))
       .limit(5);
 
+    if (rows.length === 0) {
+      return { results: [], note: "No verified My Sindbad places found for this city yet. Say so plainly rather than inventing one." };
+    }
     return { results: rows };
   }
 

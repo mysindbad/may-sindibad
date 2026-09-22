@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Button } from "@/components/ui/primitives";
-import { Skeleton } from "@/components/ui/feedback";
+import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { PlaceCard, type PlaceCardData } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 
@@ -70,7 +70,7 @@ export function NearbyDiscovery() {
     );
   }
 
-  if (nearby.length === 0) return <p className="text-sm text-slate-500">{dict.explore.noResults}</p>;
+  if (nearby.length === 0) return <EmptyState icon="🧭" title={dict.explore.noResults} body={dict.explore.noResultsHint} />;
 
   return (
     <div>

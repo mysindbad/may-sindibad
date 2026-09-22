@@ -384,6 +384,11 @@ const de = {
     empty: "Noch nichts geteilt.",
     emptyBody: "Teile als Erste:r einen Moment oder einen Tipp von unterwegs.",
     removeConfirm: "Diesen Beitrag entfernen?",
+    addPhoto: "Foto hinzufügen",
+    removePhoto: "Foto entfernen",
+    attachTrip: "Teile eine deiner Reisen (optional)",
+    noTripOption: "Keine Reise",
+    sharedTrip: "Geteilte Reise",
   },
   sindbadMemory: {
     title: "Was Sindbad sich merkt",

@@ -384,6 +384,11 @@ const es = {
     empty: "Todavía no hay publicaciones.",
     emptyBody: "Sé el primero en compartir un momento o un consejo del viaje.",
     removeConfirm: "¿Eliminar esta publicación?",
+    addPhoto: "Añadir una foto",
+    removePhoto: "Quitar la foto",
+    attachTrip: "Comparte uno de tus viajes (opcional)",
+    noTripOption: "Sin viaje",
+    sharedTrip: "Viaje compartido",
   },
   sindbadMemory: {
     title: "Lo que Sindbad recuerda",

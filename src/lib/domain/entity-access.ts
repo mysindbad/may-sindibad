@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { communityPosts, contributions, places, providers, reviews, users } from "@/db/schema";
 
-export type UploadOwnerType = "place" | "provider" | "review" | "contribution" | "avatar";
+export type UploadOwnerType = "place" | "provider" | "review" | "contribution" | "avatar" | "community_post";
 export type ReportTargetType = "place" | "provider" | "review" | "contribution" | "user" | "community_post";
 export type FavoriteTargetType = "place" | "provider";
 
@@ -37,6 +37,15 @@ export async function resolveAuthorizedUploadOwner(userId: string, ownerType: Up
       .select({ id: contributions.id })
       .from(contributions)
       .where(and(eq(contributions.id, ownerId), eq(contributions.submittedByUserId, userId)))
+      .limit(1);
+    return row?.id ?? null;
+  }
+
+  if (ownerType === "community_post") {
+    const [row] = await db
+      .select({ id: communityPosts.id })
+      .from(communityPosts)
+      .where(and(eq(communityPosts.id, ownerId), eq(communityPosts.userId, userId)))
       .limit(1);
     return row?.id ?? null;
   }

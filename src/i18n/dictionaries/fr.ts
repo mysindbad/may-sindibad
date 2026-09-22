@@ -384,6 +384,11 @@ const fr = {
     empty: "Rien de partagé pour l'instant.",
     emptyBody: "Soyez le premier à partager un moment ou un conseil de voyage.",
     removeConfirm: "Supprimer cette publication ?",
+    addPhoto: "Ajouter une photo",
+    removePhoto: "Retirer la photo",
+    attachTrip: "Partager un de vos voyages (facultatif)",
+    noTripOption: "Aucun voyage",
+    sharedTrip: "Voyage partagé",
   },
   sindbadMemory: {
     title: "Ce que Sindbad retient",

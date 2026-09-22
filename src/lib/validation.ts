@@ -226,6 +226,6 @@ export const paymentIntentCreateSchema = z.object({
 });
 
 export const uploadRequestSchema = z.object({
-  ownerType: z.enum(["place", "provider", "review", "contribution", "avatar"]),
+  ownerType: z.enum(["place", "provider", "review", "contribution", "avatar", "community_post"]),
   ownerId: z.string().uuid().optional(),
 });

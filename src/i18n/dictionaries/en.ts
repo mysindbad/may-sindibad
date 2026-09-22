@@ -380,6 +380,11 @@ const en = {
     empty: "Nothing shared yet.",
     emptyBody: "Be the first to share a moment or a tip from the road.",
     removeConfirm: "Remove this post?",
+    addPhoto: "Add a photo",
+    removePhoto: "Remove photo",
+    attachTrip: "Share one of your trips (optional)",
+    noTripOption: "No trip",
+    sharedTrip: "Shared trip",
   },
   sindbadMemory: {
     title: "What Sindbad remembers",

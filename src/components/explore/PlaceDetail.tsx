@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -135,7 +136,15 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
 
       {place.description && <p className="mt-4 text-sm leading-relaxed text-slate-700">{place.description}</p>}
 
-      <div className="mt-6 flex gap-2">
+      {typeof place.lat === "number" && typeof place.lng === "number" && (
+        <Link href={`/${locale}/navigate/${place.id}`} className="mt-4 block">
+          <Button fullWidth>
+            <span aria-hidden="true">🧭</span> {dict.navigation.takeMeThere}
+          </Button>
+        </Link>
+      )}
+
+      <div className="mt-4 flex gap-2">
         <Button variant="ghost" size="sm" onClick={sendReport} disabled={reportSent}>
           <span aria-hidden="true">🚩</span> {reportSent ? dict.community.reportSent : dict.community.report}
         </Button>

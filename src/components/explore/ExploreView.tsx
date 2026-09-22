@@ -130,7 +130,9 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
             <MapView
               className="h-full min-h-[400px] w-full rounded-2xl"
               center={mapCenter}
-              markers={places.filter((p) => typeof p.lat === "number" && typeof p.lng === "number").map((p) => ({ id: p.id, lat: p.lat!, lng: p.lng!, title: p.name }))}
+              markers={places
+                .filter((p) => typeof p.lat === "number" && typeof p.lng === "number")
+                .map((p) => ({ id: p.id, lat: p.lat!, lng: p.lng!, title: p.name, category: p.category }))}
               onMarkerClick={(id) => setSelectedId(id)}
             />
             {selectedPlace && (

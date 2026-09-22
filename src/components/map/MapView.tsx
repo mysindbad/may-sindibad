@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Map as MapLibreMap, Marker as MapLibreMarker, NavigationControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getDefaultTileStyle, type MapMarker } from "@/lib/maps/types";
+import { placeCategoryStyle } from "@/lib/domain/place-category";
 
 // Thin wrapper around MapLibre GL. Only this file talks to the map SDK; the
 // raster endpoint itself is environment-configured so production is not tied
@@ -60,16 +61,26 @@ export function MapView({
 
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = markers.map((marker) => {
+      // A plain coloured dot forced a tap before a traveller knew what a pin
+      // even was. The same category icon used on place cards makes a
+      // restaurant recognisable as a restaurant at a glance on the map too.
+      const style = placeCategoryStyle(marker.category, marker.title);
       const el = document.createElement("button");
       el.type = "button";
       el.setAttribute("aria-label", marker.title);
-      el.style.width = "30px";
-      el.style.height = "30px";
+      el.style.width = "32px";
+      el.style.height = "32px";
       el.style.borderRadius = "9999px";
       el.style.border = "2px solid white";
       el.style.boxShadow = "0 2px 8px rgba(7,28,51,0.35)";
-      el.style.background = marker.isSponsored ? "#f4b93e" : "#0b3552";
+      el.style.background = marker.isSponsored ? "#f4b93e" : style.solidColor;
       el.style.cursor = "pointer";
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.fontSize = "15px";
+      el.style.lineHeight = "1";
+      el.textContent = style.icon;
 
       el.addEventListener("click", () => onMarkerClick?.(marker.id));
 

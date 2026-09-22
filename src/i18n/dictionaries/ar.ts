@@ -383,6 +383,11 @@ const ar = {
     empty: "لا توجد مشاركات بعد.",
     emptyBody: "كن أول من يشارك لحظة أو نصيحة من الطريق.",
     removeConfirm: "هل تريد حذف هذا المنشور؟",
+    addPhoto: "إضافة صورة",
+    removePhoto: "إزالة الصورة",
+    attachTrip: "شارك إحدى رحلاتك (اختياري)",
+    noTripOption: "بدون رحلة",
+    sharedTrip: "رحلة مُشارَكة",
   },
   sindbadMemory: {
     title: "ما يتذكره سندباد",
