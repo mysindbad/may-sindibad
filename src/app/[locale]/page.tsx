@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/getDictionary";
 import { getOwnerContext } from "@/lib/auth/owner-context";
 import { getRecommendedPlaces, getHiddenGems } from "@/lib/data/places";
 import { getRelevantTrip } from "@/lib/data/trips";
+import { getLatestCommunityPost } from "@/lib/data/community";
 import { currentDayPart } from "@/lib/travel-context";
 import { dateKeyInTimeZone, getRequestTimeZone } from "@/lib/timezone";
 import { formatDateRange } from "@/lib/utils";
@@ -12,6 +13,13 @@ import { PlaceCard } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 import { NearbyDiscovery } from "@/components/home/NearbyDiscovery";
 import { Card } from "@/components/ui/primitives";
+
+const COMMUNITY_CHIPS = [
+  { kind: "story", icon: "📖", gradient: "from-violet-500 to-purple-400", labelKey: "kindStory", captionKey: "captionStory" },
+  { kind: "place", icon: "📍", gradient: "from-emerald-500 to-teal-400", labelKey: "kindPlace", captionKey: "captionPlace" },
+  { kind: "tip", icon: "💡", gradient: "from-rose-500 to-pink-400", labelKey: "kindTip", captionKey: "captionTip" },
+  { kind: "moment", icon: "📷", gradient: "from-amber-500 to-orange-400", labelKey: "kindMoment", captionKey: "captionMoment" },
+] as const;
 
 const GREETING_KEY = {
   morning: "greetingMorning",
@@ -27,10 +35,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const [dict, owner, timeZone] = await Promise.all([getDictionary(locale), getOwnerContext(), getRequestTimeZone()]);
   const today = dateKeyInTimeZone(new Date(), timeZone);
-  const [recommended, hiddenGems, activeTrip] = await Promise.all([
+  const [recommended, hiddenGems, activeTrip, latestPost] = await Promise.all([
     getRecommendedPlaces(undefined, 6),
     getHiddenGems(undefined, 6),
     getRelevantTrip(owner, today),
+    getLatestCommunityPost(),
   ]);
 
   const dayPart = currentDayPart(timeZone);
@@ -42,15 +51,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <p className="text-sm text-sky-200">{greeting}</p>
         <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{dict.home.heroTitlePlanner}</h1>
         <p className="mt-2 max-w-md text-sm text-sky-100">{dict.home.heroSubtitle}</p>
-        <div className="mt-5 flex flex-wrap gap-3">
+        <form action={`/${locale}/explore`} method="GET" className="relative mt-5">
+          <input
+            type="text"
+            name="city"
+            placeholder={dict.home.searchPlaceholder}
+            className="w-full rounded-xl border border-white/20 bg-white/95 py-3 ps-4 pe-11 text-sm text-brand-950 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-white/40"
+          />
+          <button type="submit" aria-label={dict.common.search} className="absolute inset-y-0 end-0 flex items-center pe-3.5 text-slate-400">
+            🔍
+          </button>
+        </form>
+        <div className="mt-3 flex flex-wrap gap-3">
           <Link href={`/${locale}/ai`} className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 shadow-sm">
             ✨ {dict.home.askSindbad}
-          </Link>
-          <Link href={`/${locale}/explore`} className="rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white">
-            🧭 {dict.home.exploreCta}
-          </Link>
-          <Link href={`/${locale}/community`} className="rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white">
-            🧳 {dict.home.communityCta}
           </Link>
         </div>
       </section>
@@ -71,6 +85,40 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </Link>
         </section>
       )}
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.home.communityCta}</h2>
+          <Link href={`/${locale}/community`} className="text-xs font-medium text-sky-600">
+            {dict.common.seeAll}
+          </Link>
+        </div>
+        <div className="mb-3 grid grid-cols-4 gap-2">
+          {COMMUNITY_CHIPS.map((chip) => (
+            <Link key={chip.kind} href={`/${locale}/community`} className="flex flex-col items-center gap-1.5 text-center">
+              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${chip.gradient} text-xl text-white shadow-sm`}>
+                {chip.icon}
+              </span>
+              <span className="text-xs font-semibold text-brand-950 dark:text-sand-50">{dict.communityFeed[chip.labelKey]}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">{dict.communityFeed[chip.captionKey]}</span>
+            </Link>
+          ))}
+        </div>
+        {latestPost && (
+          <Link href={`/${locale}/community`}>
+            <Card className="flex gap-3 overflow-hidden p-3 hover:shadow-[var(--shadow-elevated)]">
+              {latestPost.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                <img src={latestPost.imageUrl} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{latestPost.authorName}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-slate-600 dark:text-slate-400">{latestPost.title ?? latestPost.body}</p>
+              </div>
+            </Card>
+          </Link>
+        )}
+      </section>
 
       <section>
         <div className="mb-3 flex items-center justify-between">

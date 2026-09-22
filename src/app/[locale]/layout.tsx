@@ -13,10 +13,10 @@ import { TimezoneSync } from "@/components/system/TimezoneSync";
 import { ThemeSync } from "@/components/system/ThemeSync";
 import { ServiceWorkerRegistration } from "@/components/system/ServiceWorkerRegistration";
 
-// Runs before hydration so a night visit paints dark immediately instead of
-// flashing light first. ThemeSync (a client component) keeps this in sync
-// afterwards, e.g. if the app is left open across the day/night boundary.
-const THEME_INIT_SCRIPT = `(function(){try{var h=new Date().getHours();if(h<6||h>=19)document.documentElement.classList.add('dark');}catch(e){}})();`;
+// Runs before hydration so the right theme paints immediately instead of
+// flashing light first. Mirrors ThemeSync's logic: a stored "light"/"dark"
+// choice wins, otherwise it falls back to local time (dark 7pm-6am).
+const THEME_INIT_SCRIPT = `(function(){try{var pref=window.localStorage.getItem('sindbad_theme');var isDark;if(pref==='dark')isDark=true;else if(pref==='light')isDark=false;else{var h=new Date().getHours();isDark=h<6||h>=19;}if(isDark)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
 // A single elegant type family for the whole app, Arabic and Latin alike -
 // one consistent look instead of each OS/browser falling back to whatever

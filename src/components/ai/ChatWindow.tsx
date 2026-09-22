@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Button, Input } from "@/components/ui/primitives";
 import { InlineAlert } from "@/components/ui/feedback";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 interface ChatMessage {
   id: string;
@@ -83,9 +84,7 @@ export function ChatWindow() {
       >
         {messages.length === 0 && !notConfigured && (
           <div className="w-full rounded-3xl border border-dashed border-brand-900/15 bg-white/60 p-6 text-center dark:border-white/15 dark:bg-white/5">
-            <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-800 to-sky-500 text-2xl">
-              🧞
-            </span>
+            <BrandMark className="mx-auto mb-3 h-12 w-12 rounded-full object-cover" />
             <p className="mb-3 text-sm font-medium text-brand-950 dark:text-sand-50">{dict.ai.emptyTitle}</p>
             <div className="flex flex-col gap-2">
               {suggestions.map((s) => (

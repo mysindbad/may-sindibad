@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
-import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Link from "next/link";
@@ -37,16 +36,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-dvh w-full flex-col">
         <TopBar />
         <header className="hidden items-center justify-end gap-3 border-b border-brand-900/8 bg-white px-8 py-3 md:flex dark:border-white/10 dark:bg-brand-950">
-          <LocaleSwitcher />
-          {!user && (
-            <Link href={`/${locale}/login`} className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-800/5 dark:text-sky-300 dark:hover:bg-white/5">
-              {dict.nav.login}
+          {user ? (
+            <Link href={`/${locale}/profile`} aria-label={dict.nav.profile}>
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-brand-900/10 dark:ring-white/15" />
+              ) : (
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-800 text-sm font-semibold text-white">
+                  {user.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
             </Link>
-          )}
-          {!user && (
-            <Link href={`/${locale}/signup`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-sm font-medium text-white">
-              {dict.nav.signup}
-            </Link>
+          ) : (
+            <>
+              <Link href={`/${locale}/login`} className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-800/5 dark:text-sky-300 dark:hover:bg-white/5">
+                {dict.nav.login}
+              </Link>
+              <Link href={`/${locale}/signup`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-sm font-medium text-white">
+                {dict.nav.signup}
+              </Link>
+            </>
           )}
         </header>
         <main className="flex-1 pb-20 md:pb-8">{children}</main>

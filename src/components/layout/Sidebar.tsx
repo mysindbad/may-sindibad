@@ -6,6 +6,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 export function Sidebar() {
   const { locale, dict } = useLocale();
@@ -15,7 +16,7 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-e border-brand-900/8 bg-white p-5 md:flex dark:border-white/10 dark:bg-brand-950">
       <Link href={`/${locale}`} className="mb-8 flex items-center gap-2 px-1">
-        <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-brand-800 text-lg text-white">🧞</span>
+        <BrandMark className="h-9 w-9 rounded-xl object-cover" />
         <span className="text-lg font-semibold text-brand-950 dark:text-sand-50">{dict.common.appName}</span>
       </Link>
 

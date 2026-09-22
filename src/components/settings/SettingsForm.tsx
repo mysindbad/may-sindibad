@@ -7,6 +7,7 @@ import { useAuth, type SessionUser } from "@/components/auth/AuthProvider";
 import { Button, Input, Label } from "@/components/ui/primitives";
 import { ConfirmButton, InlineAlert } from "@/components/ui/feedback";
 import { buildLoginPath } from "@/lib/auth/return-path";
+import { AppearanceSettings } from "./AppearanceSettings";
 
 export function SettingsForm({ user }: { user: SessionUser }) {
   const { dict, locale } = useLocale();
@@ -152,8 +153,12 @@ export function SettingsForm({ user }: { user: SessionUser }) {
         </Button>
       </form>
 
-      <div className="border-t border-slate-200 pt-5">
-        <h2 className="mb-2 text-sm font-semibold text-red-700">{dict.settings.account}</h2>
+      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
+        <AppearanceSettings />
+      </div>
+
+      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
+        <h2 className="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">{dict.settings.account}</h2>
         <ConfirmButton label={dict.settings.deleteAccount} confirmLabel={dict.settings.deleteAccountConfirm} onConfirm={handleDelete} />
       </div>
     </div>

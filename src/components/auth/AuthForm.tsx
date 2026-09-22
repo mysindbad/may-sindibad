@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Button, Input, Label, FieldError } from "@/components/ui/primitives";
 import { InlineAlert } from "@/components/ui/feedback";
 import { sanitizeReturnPath } from "@/lib/auth/return-path";
+import { BrandMark } from "@/components/brand/BrandMark";
 import Link from "next/link";
 
 interface AuthFormProps {
@@ -66,9 +67,7 @@ export function AuthForm({ mode, googleEnabled = false, nextPath, authError }: A
   return (
     <div className="mx-auto min-h-[calc(100dvh-56px)] max-w-sm md:min-h-[calc(100dvh-64px)]">
       <div className="rounded-b-[2.5rem] bg-gradient-to-br from-brand-900 via-brand-800 to-sky-600 px-6 pb-10 pt-12 text-center text-white shadow-[var(--shadow-elevated)]">
-        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/15 text-3xl ring-2 ring-white/30 backdrop-blur-sm">
-          🧞
-        </span>
+        <BrandMark className="mx-auto h-16 w-16 rounded-full object-cover ring-2 ring-white/30" />
         <h1 className="mt-4 text-2xl font-semibold">{mode === "login" ? dict.auth.loginTitle : dict.auth.signupTitle}</h1>
         <p className="mt-1.5 text-sm text-white/75">{mode === "login" ? dict.auth.loginSubtitle : dict.auth.signupSubtitle}</p>
       </div>
