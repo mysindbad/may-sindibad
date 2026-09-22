@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
@@ -9,9 +10,26 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Link from "next/link";
 
+// Login/signup are their own focused, full-screen moment - the app's nav
+// (bottom bar on mobile, sidebar on desktop) points at destinations that are
+// meaningless before the traveller has an account, so it only clutters a
+// screen that's supposed to feel clean and deliberate.
+const AUTH_PATH_PATTERN = /^\/[a-z]{2}\/(login|signup)(\/|$)/;
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { locale, dict } = useLocale();
   const { user } = useAuth();
+  const pathname = usePathname();
+  const isAuthPage = AUTH_PATH_PATTERN.test(pathname);
+
+  if (isAuthPage) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-sand-50 dark:bg-brand-950">
+        <TopBar />
+        <main className="flex-1">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-dvh bg-sand-50 dark:bg-brand-950">

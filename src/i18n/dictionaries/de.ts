@@ -81,6 +81,7 @@ const de = {
     recommendedTitle: "Für dich ausgewählt",
     hiddenGemsTitle: "Geheimtipps",
     exploreCta: "Karte entdecken",
+    communityCta: "Reise-Community",
     emptyNearby: "Aktiviere den Standort, um zu sehen, was in der Nähe ist.",
     enableLocation: "Meinen Standort verwenden",
   },

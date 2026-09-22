@@ -79,6 +79,7 @@ const en = {
     recommendedTitle: "Picked for you",
     hiddenGemsTitle: "Hidden gems",
     exploreCta: "Explore the map",
+    communityCta: "Traveller community",
     emptyNearby: "Turn on location to see what's around you.",
     enableLocation: "Use my location",
   },

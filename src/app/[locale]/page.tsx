@@ -49,6 +49,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <Link href={`/${locale}/explore`} className="rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white">
             🧭 {dict.home.exploreCta}
           </Link>
+          <Link href={`/${locale}/community`} className="rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white">
+            🧳 {dict.home.communityCta}
+          </Link>
         </div>
       </section>
 

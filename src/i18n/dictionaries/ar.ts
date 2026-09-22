@@ -81,6 +81,7 @@ const ar = {
     recommendedTitle: "مختارات لك",
     hiddenGemsTitle: "كنوز خفية",
     exploreCta: "استكشف الخريطة",
+    communityCta: "مجتمع المسافرين",
     emptyNearby: "فعّل الموقع لترى ما يحيط بك.",
     enableLocation: "استخدام موقعي",
   },

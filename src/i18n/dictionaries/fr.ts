@@ -81,6 +81,7 @@ const fr = {
     recommendedTitle: "Sélectionné pour vous",
     hiddenGemsTitle: "Trésors cachés",
     exploreCta: "Explorer la carte",
+    communityCta: "Communauté de voyageurs",
     emptyNearby: "Activez la localisation pour voir ce qu'il y a autour de vous.",
     enableLocation: "Utiliser ma position",
   },

@@ -81,6 +81,7 @@ const ru = {
     recommendedTitle: "Подобрано для вас",
     hiddenGemsTitle: "Скрытые жемчужины",
     exploreCta: "Открыть карту",
+    communityCta: "Сообщество путешественников",
     emptyNearby: "Включите геолокацию, чтобы увидеть, что рядом.",
     enableLocation: "Использовать мою геолокацию",
   },

@@ -44,6 +44,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
     { href: "/trips", label: dict.profile.yourTrips, icon: "🗺️", gradient: "from-sky-500 to-turquoise-400" },
     { href: "/bookings", label: dict.profile.yourBookings, icon: "🧾", gradient: "from-turquoise-500 to-lime-400" },
     { href: "/favorites", label: dict.profile.savedPlaces, icon: "🤍", gradient: "from-rose-500 to-pink-400" },
+    { href: "/community", label: dict.community.title, icon: "🧳", gradient: "from-amber-500 to-orange-400" },
   ];
 
   const accountLinks: ProfileLink[] = [

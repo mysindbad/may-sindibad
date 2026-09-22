@@ -81,6 +81,7 @@ const es = {
     recommendedTitle: "Elegido para ti",
     hiddenGemsTitle: "Joyas escondidas",
     exploreCta: "Explorar el mapa",
+    communityCta: "Comunidad de viajeros",
     emptyNearby: "Activa la ubicación para ver qué hay cerca de ti.",
     enableLocation: "Usar mi ubicación",
   },
