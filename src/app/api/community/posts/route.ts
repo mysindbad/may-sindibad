@@ -15,14 +15,20 @@ import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const createSchema = z.object({
-  kind: z.enum(["moment", "tip", "place"]).default("moment"),
-  body: z.string().trim().min(2).max(1000),
-  placeId: z.string().uuid().optional(),
-  tripId: z.string().uuid().optional(),
-  city: z.string().trim().max(120).optional(),
-  country: z.string().trim().max(120).optional(),
-});
+const createSchema = z
+  .object({
+    kind: z.enum(["moment", "tip", "place", "story"]).default("moment"),
+    title: z.string().trim().min(1).max(140).optional(),
+    body: z.string().trim().min(2).max(4000),
+    placeId: z.string().uuid().optional(),
+    tripId: z.string().uuid().optional(),
+    city: z.string().trim().max(120).optional(),
+    country: z.string().trim().max(120).optional(),
+  })
+  .refine((data) => data.kind !== "story" || Boolean(data.title), {
+    message: "A story needs a title.",
+    path: ["title"],
+  });
 
 export async function GET() {
   // Only published posts are ever served. Flagged or removed posts stay
@@ -31,6 +37,7 @@ export async function GET() {
     .select({
       id: communityPosts.id,
       kind: communityPosts.kind,
+      title: communityPosts.title,
       body: communityPosts.body,
       placeId: communityPosts.placeId,
       tripId: communityPosts.tripId,
@@ -79,6 +86,7 @@ export async function GET() {
     posts: rows.map((row) => ({
       id: row.id,
       kind: row.kind,
+      title: row.title,
       body: row.body,
       city: row.city,
       country: row.country,
@@ -151,7 +159,16 @@ export async function POST(request: Request) {
 
     const [post] = await db
       .insert(communityPosts)
-      .values({ userId: user.id, kind: parsed.data.kind, body: parsed.data.body, placeId, tripId, city, country })
+      .values({
+        userId: user.id,
+        kind: parsed.data.kind,
+        title: parsed.data.kind === "story" ? parsed.data.title : null,
+        body: parsed.data.body,
+        placeId,
+        tripId,
+        city,
+        country,
+      })
       .returning({ id: communityPosts.id, createdAt: communityPosts.createdAt });
 
     return NextResponse.json({ post: { id: post.id, createdAt: post.createdAt } }, { status: 201 });

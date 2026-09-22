@@ -22,7 +22,7 @@ export default async function TripsPage({ params }: { params: Promise<{ locale: 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-brand-950">{dict.trips.title}</h1>
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.trips.title}</h1>
         <Link href={`/${locale}/trips/new`}>
           <Button size="sm">+ {dict.trips.newTrip}</Button>
         </Link>
@@ -46,8 +46,8 @@ export default async function TripsPage({ params }: { params: Promise<{ locale: 
               <Link href={`/${locale}/trips/${trip.id}`}>
                 <Card className="flex items-center justify-between p-4 hover:shadow-[var(--shadow-elevated)]">
                   <div>
-                    <p className="text-sm font-semibold text-brand-950">{trip.title}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{trip.title}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {trip.destinationCity}, {trip.destinationCountry} · {formatDateRange(trip.startDate, trip.endDate, locale)}
                     </p>
                   </div>

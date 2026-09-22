@@ -33,8 +33,8 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     <div className="mx-auto max-w-xl space-y-5 px-4 py-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-brand-950">{provider?.name ?? "Booking"}</h1>
-          <p className="text-sm text-slate-500">{service?.name}</p>
+          <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{provider?.name ?? "Booking"}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{service?.name}</p>
         </div>
         <BookingStatusBadge status={booking.status} dict={dict} />
       </div>
@@ -54,8 +54,8 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between border-b border-slate-100 pb-2 last:border-0 last:pb-0">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-brand-950">{value}</span>
+      <span className="text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="font-medium text-brand-950 dark:text-sand-50">{value}</span>
     </div>
   );
 }

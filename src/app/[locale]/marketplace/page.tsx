@@ -29,8 +29,8 @@ export default async function MarketplacePage({ params }: { params: Promise<{ lo
     <div className="mx-auto max-w-4xl px-4 py-6">
       <div className="mb-2 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-brand-950">{dict.marketplace.title}</h1>
-          <p className="text-sm text-slate-500">{dict.marketplace.subtitle}</p>
+          <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.marketplace.title}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{dict.marketplace.subtitle}</p>
         </div>
         <Link href={`/${locale}/provider`}>
           <Button size="sm" variant="secondary">
@@ -48,8 +48,8 @@ export default async function MarketplacePage({ params }: { params: Promise<{ lo
               <Link href={`/${locale}/marketplace/${provider.id}`}>
                 <Card className="flex items-center justify-between p-4 hover:shadow-[var(--shadow-elevated)]">
                   <div>
-                    <p className="text-sm font-semibold text-brand-950">{provider.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{provider.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {provider.city}, {provider.country}
                     </p>
                   </div>

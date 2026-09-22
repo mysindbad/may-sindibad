@@ -86,28 +86,28 @@ export default async function TodayPage({ params }: { params: Promise<{ locale: 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-brand-950">{dict.today.title}</h1>
-        <div className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.today.title}</h1>
+        <div className="text-sm text-slate-500 dark:text-slate-400">
           {weather ? `${weather.temperatureC}°C · ${weather.condition}` : dict.today.weatherUnavailable}
         </div>
       </div>
 
       <Card className="p-4">
         <p className="text-xs uppercase tracking-wide text-slate-400">{activeTrip.title}</p>
-        <p className="text-sm text-slate-600">{activeTrip.destinationCity}, {activeTrip.destinationCountry}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{activeTrip.destinationCity}, {activeTrip.destinationCountry}</p>
       </Card>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold text-brand-950">{dict.today.nextUp}</h2>
+        <h2 className="mb-2 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.today.nextUp}</h2>
         {upcoming ? (
           <Card className="p-4">
-            <p className="text-sm font-semibold text-brand-950">
+            <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">
               {upcoming.startTime} · {upcoming.title}
             </p>
-            {upcoming.notes && <p className="mt-1 text-xs text-slate-500">{upcoming.notes}</p>}
+            {upcoming.notes && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{upcoming.notes}</p>}
           </Card>
         ) : (
-          <p className="text-sm text-slate-500">{dict.today.nothingScheduled}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{dict.today.nothingScheduled}</p>
         )}
         <Link href={`/${locale}/trips/${activeTrip.id}`} className="mt-2 inline-block text-xs font-medium text-sky-600">
           {dict.today.viewFullItinerary} →
@@ -116,7 +116,7 @@ export default async function TodayPage({ params }: { params: Promise<{ locale: 
 
       {nearby.length > 0 && (
         <section>
-          <h2 className="mb-2 text-base font-semibold text-brand-950">{dict.today.nearbyNow}</h2>
+          <h2 className="mb-2 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.today.nearbyNow}</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {nearby.map((place) => (
               <PlaceCard key={place.id} place={place} locale={locale} trustLabel={placeTrustLabel(place.sourceType, dict)} />

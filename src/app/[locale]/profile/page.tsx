@@ -26,8 +26,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
     return (
       <div className="mx-auto max-w-md space-y-4 px-4 py-10 text-center">
         <span className="text-3xl">🧳</span>
-        <h1 className="text-lg font-semibold text-brand-950">{dict.profile.guestTitle}</h1>
-        <p className="text-sm text-slate-600">{dict.profile.guestBody}</p>
+        <h1 className="text-lg font-semibold text-brand-950 dark:text-sand-50">{dict.profile.guestTitle}</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{dict.profile.guestBody}</p>
         <div className="flex justify-center gap-3">
           <Link href={`/${locale}/login`}>
             <Button variant="secondary">{dict.nav.login}</Button>
@@ -113,7 +113,7 @@ function ProfileLinkCard({ locale, link }: { locale: string; link: ProfileLink }
         >
           {link.icon}
         </span>
-        <span className="flex-1 text-sm font-medium text-brand-950">{link.label}</span>
+        <span className="flex-1 text-sm font-medium text-brand-950 dark:text-sand-50">{link.label}</span>
         <span className="text-slate-400">→</span>
       </Card>
     </Link>

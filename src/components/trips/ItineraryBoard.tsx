@@ -91,7 +91,7 @@ export function ItineraryBoard({ trip, days: initialDays, aiNotice }: { trip: Tr
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <div className="mb-4 flex items-start justify-between">
-        <h1 className="text-xl font-semibold text-brand-950">{trip.title}</h1>
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{trip.title}</h1>
         <ConfirmButton label={dict.common.delete} confirmLabel={dict.trips.deleteConfirm} onConfirm={deleteTrip} />
       </div>
 
@@ -100,19 +100,19 @@ export function ItineraryBoard({ trip, days: initialDays, aiNotice }: { trip: Tr
       <div className="my-5 space-y-6">
         {days.map((day) => (
           <div key={day.id}>
-            <h2 className="mb-2 text-sm font-semibold text-brand-900">
+            <h2 className="mb-2 text-sm font-semibold text-brand-900 dark:text-sand-50">
               {dict.trips.day} {day.dayIndex + 1} · {day.date}
             </h2>
             <ul className="space-y-2">
               {day.items.map((item) => (
                 <li key={item.id} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-[var(--shadow-card)]">
                   <div>
-                    <p className={`text-sm font-medium ${item.status === "skipped" ? "text-slate-400 line-through" : "text-brand-950"}`}>
+                    <p className={`text-sm font-medium ${item.status === "skipped" ? "text-slate-400 line-through" : "text-brand-950 dark:text-sand-50"}`}>
                       {item.startTime ? `${item.startTime} · ` : ""}
                       {item.title}
                     </p>
                     {item.estimatedCost && Number(item.estimatedCost) > 0 && (
-                      <p className="text-xs text-slate-500">{formatCurrency(item.estimatedCost, item.currency, locale)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(item.estimatedCost, item.currency, locale)}</p>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -143,14 +143,14 @@ export function ItineraryBoard({ trip, days: initialDays, aiNotice }: { trip: Tr
       </div>
 
       <form onSubmit={handleAdjust} className="rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="mb-2 text-sm font-medium text-brand-950">{dict.trips.askToModify}</p>
+        <p className="mb-2 text-sm font-medium text-brand-950 dark:text-sand-50">{dict.trips.askToModify}</p>
         <div className="flex gap-2">
           <Input value={adjustMessage} onChange={(e) => setAdjustMessage(e.target.value)} placeholder={dict.trips.modifyPlaceholder} aria-label={dict.trips.modifyPlaceholder} />
           <Button type="submit" loading={busy} disabled={!adjustMessage.trim()}>
             {dict.common.confirm}
           </Button>
         </div>
-        {adjustFeedback && <p className="mt-2 text-xs text-slate-600">{adjustFeedback}</p>}
+        {adjustFeedback && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{adjustFeedback}</p>}
       </form>
     </div>
   );

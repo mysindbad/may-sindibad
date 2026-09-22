@@ -54,12 +54,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {activeTrip && (
         <section>
-          <h2 className="mb-3 text-base font-semibold text-brand-950">{dict.home.tripContextTitle}</h2>
+          <h2 className="mb-3 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.home.tripContextTitle}</h2>
           <Link href={`/${locale}/today`}>
             <Card className="flex items-center justify-between p-4 hover:shadow-[var(--shadow-elevated)]">
               <div>
-                <p className="text-sm font-semibold text-brand-950">{activeTrip.title}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{activeTrip.title}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {activeTrip.destinationCity} · {formatDateRange(activeTrip.startDate, activeTrip.endDate, locale)}
                 </p>
               </div>
@@ -71,7 +71,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-brand-950">{dict.home.nearbyTitle}</h2>
+          <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.home.nearbyTitle}</h2>
         </div>
         <NearbyDiscovery />
       </section>
@@ -79,7 +79,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {recommended.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-brand-950">{dict.home.recommendedTitle}</h2>
+            <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.home.recommendedTitle}</h2>
             <Link href={`/${locale}/explore`} className="text-xs font-medium text-sky-600">
               {dict.common.seeAll}
             </Link>
@@ -95,7 +95,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {hiddenGems.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-brand-950">{dict.home.hiddenGemsTitle}</h2>
+            <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.home.hiddenGemsTitle}</h2>
             <Link href={`/${locale}/explore`} className="text-xs font-medium text-sky-600">
               {dict.common.seeAll}
             </Link>
@@ -111,8 +111,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section>
         <Card className="flex flex-col items-start gap-2 border-dashed p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-brand-950">{dict.marketplace.becomeProviderTitle}</p>
-            <p className="text-xs text-slate-500">{dict.marketplace.becomeProviderBody}</p>
+            <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{dict.marketplace.becomeProviderTitle}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{dict.marketplace.becomeProviderBody}</p>
           </div>
           <Link href={`/${locale}/marketplace`} className="shrink-0 rounded-lg bg-brand-800 px-4 py-2 text-xs font-semibold text-white">
             {dict.nav.becomeProvider}

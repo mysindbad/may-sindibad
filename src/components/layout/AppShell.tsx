@@ -14,14 +14,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   return (
-    <div className="flex min-h-dvh bg-sand-50">
+    <div className="flex min-h-dvh bg-sand-50 dark:bg-brand-950">
       <Sidebar />
       <div className="flex min-h-dvh w-full flex-col">
         <TopBar />
-        <header className="hidden items-center justify-end gap-3 border-b border-brand-900/8 bg-white px-8 py-3 md:flex">
+        <header className="hidden items-center justify-end gap-3 border-b border-brand-900/8 bg-white px-8 py-3 md:flex dark:border-white/10 dark:bg-brand-950">
           <LocaleSwitcher />
           {!user && (
-            <Link href={`/${locale}/login`} className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-800/5">
+            <Link href={`/${locale}/login`} className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-800/5 dark:text-sky-300 dark:hover:bg-white/5">
               {dict.nav.login}
             </Link>
           )}

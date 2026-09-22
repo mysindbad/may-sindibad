@@ -32,7 +32,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <h1 className="mb-5 text-xl font-semibold text-brand-950">{dict.bookings.title}</h1>
+      <h1 className="mb-5 text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.bookings.title}</h1>
 
       {rows.length === 0 ? (
         <EmptyState icon="🧾" title={dict.bookings.emptyTitle} body={dict.bookings.emptyBody} />
@@ -43,8 +43,8 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
               <Link href={`/${locale}/bookings/${booking.id}`}>
                 <Card className="flex items-center justify-between p-4 hover:shadow-[var(--shadow-elevated)]">
                   <div>
-                    <p className="text-sm font-semibold text-brand-950">{providerName ?? "Booking"}</p>
-                    <p className="text-xs text-slate-500">{formatCurrency(booking.totalAmount, booking.currency, locale)}</p>
+                    <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{providerName ?? "Booking"}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(booking.totalAmount, booking.currency, locale)}</p>
                   </div>
                   <BookingStatusBadge status={booking.status} dict={dict} />
                 </Card>

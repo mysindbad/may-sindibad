@@ -33,21 +33,21 @@ export default async function CommunityPage({ params }: { params: Promise<{ loca
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div>
-        <h1 className="text-xl font-semibold text-brand-950">{dict.community.title}</h1>
-        <p className="text-sm text-slate-500">{dict.community.subtitle}</p>
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.community.title}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{dict.community.subtitle}</p>
       </div>
 
       {/* Travel moments, tips and place recommendations that other travellers
           can act on straight away. */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-brand-950">{dict.communityFeed.title}</h2>
+        <h2 className="mb-3 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.communityFeed.title}</h2>
         <CommunityFeed />
       </section>
 
       <ContributeForm />
 
       <section>
-        <h2 className="mb-3 text-base font-semibold text-brand-950">{dict.community.recentContributions}</h2>
+        <h2 className="mb-3 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.community.recentContributions}</h2>
         <ul className="space-y-2">
           {rows.map((c) => {
             const payload = c.payload as Record<string, unknown>;
@@ -56,8 +56,8 @@ export default async function CommunityPage({ params }: { params: Promise<{ loca
               <li key={c.id}>
                 <Card className="flex items-center justify-between p-3">
                   <div>
-                    <p className="text-sm font-semibold text-brand-950">{name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {trustLabel(c.status)} · {c.confirmationsCount} confirmation{c.confirmationsCount === 1 ? "" : "s"}
                     </p>
                   </div>
@@ -69,7 +69,7 @@ export default async function CommunityPage({ params }: { params: Promise<{ loca
               </li>
             );
           })}
-          {rows.length === 0 && <p className="text-sm text-slate-500">{dict.community.noContributions}</p>}
+          {rows.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.community.noContributions}</p>}
         </ul>
       </section>
     </div>

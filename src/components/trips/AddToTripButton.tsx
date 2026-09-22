@@ -111,11 +111,11 @@ export function AddToTripButton({ placeId, size = "sm" }: { placeId: string; siz
 
   return (
     <div className="w-full space-y-2 rounded-xl border border-slate-200 p-3">
-      {loading && <p className="text-xs text-slate-500">{dict.common.loading}</p>}
+      {loading && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.common.loading}</p>}
 
       {!loading && trips !== null && trips.length === 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-slate-600">{dict.addToTrip.noTrips}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{dict.addToTrip.noTrips}</p>
           <Link href={"/" + locale + "/trips/new"}>
             <Button size="sm">{dict.addToTrip.createFirst}</Button>
           </Link>
@@ -125,7 +125,7 @@ export function AddToTripButton({ placeId, size = "sm" }: { placeId: string; siz
       {!loading && trips !== null && trips.length > 0 && (
         <>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor={"trip-" + placeId}>
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400" htmlFor={"trip-" + placeId}>
               {dict.addToTrip.choose}
             </label>
             <Select
@@ -146,7 +146,7 @@ export function AddToTripButton({ placeId, size = "sm" }: { placeId: string; siz
 
           {days.length > 0 && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor={"day-" + placeId}>
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400" htmlFor={"day-" + placeId}>
                 {dict.addToTrip.chooseDay}
               </label>
               <Select id={"day-" + placeId} value={dayIndex} onChange={(e) => setDayIndex(e.target.value)}>

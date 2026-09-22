@@ -24,8 +24,8 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
       <div>
-        <h1 className="text-xl font-semibold text-brand-950">{provider.name}</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{provider.name}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {provider.city}, {provider.country}
         </p>
         <Badge tone={provider.verificationStatus === "verified" ? "lime" : "neutral"} className="mt-2">
@@ -33,26 +33,26 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
         </Badge>
       </div>
 
-      {provider.description && <p className="text-sm text-slate-700">{provider.description}</p>}
+      {provider.description && <p className="text-sm text-slate-700 dark:text-slate-300">{provider.description}</p>}
 
       <section>
-        <h2 className="mb-2 text-base font-semibold text-brand-950">{dict.marketplace.services}</h2>
+        <h2 className="mb-2 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.marketplace.services}</h2>
         <div className="space-y-2">
           {services.map((service) => (
             <Card key={service.id} className="p-3">
-              <p className="text-sm font-semibold text-brand-950">{service.name}</p>
-              {service.description && <p className="text-xs text-slate-500">{service.description}</p>}
+              <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{service.name}</p>
+              {service.description && <p className="text-xs text-slate-500 dark:text-slate-400">{service.description}</p>}
               {service.priceAmount && (
                 <p className="mt-1 text-xs font-medium text-sky-700">{formatCurrency(service.priceAmount, service.priceCurrency, locale)}</p>
               )}
             </Card>
           ))}
-          {services.length === 0 && <p className="text-sm text-slate-500">{dict.marketplace.noServices}</p>}
+          {services.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.marketplace.noServices}</p>}
         </div>
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold text-brand-950">{dict.bookings.bookNow}</h2>
+        <h2 className="mb-2 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.bookings.bookNow}</h2>
         <BookingForm
           providerId={provider.id}
           services={services

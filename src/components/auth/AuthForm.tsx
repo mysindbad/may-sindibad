@@ -131,14 +131,14 @@ export function AuthForm({ mode, googleEnabled = false, nextPath, authError }: A
 
         <div className="mt-6 space-y-3 text-center text-sm">
           {mode === "login" ? (
-            <p className="text-slate-600">
+            <p className="text-slate-600 dark:text-slate-400">
               {dict.auth.noAccount}{" "}
               <Link href={`/${locale}/signup${nextQuery}`} className="font-medium text-sky-600">
                 {dict.nav.signup}
               </Link>
             </p>
           ) : (
-            <p className="text-slate-600">
+            <p className="text-slate-600 dark:text-slate-400">
               {dict.auth.haveAccount}{" "}
               <Link href={`/${locale}/login${nextQuery}`} className="font-medium text-sky-600">
                 {dict.nav.login}

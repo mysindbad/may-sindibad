@@ -111,8 +111,8 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
       <div aria-hidden="true" className="flex h-40 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-800 to-sky-500 text-5xl text-white">📍</div>
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-brand-950">{place.name}</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{place.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {place.address ? `${place.address} · ` : ""}
             {place.city}, {place.country}
           </p>
@@ -134,7 +134,7 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
         {place.ratingCount > 0 && <Badge tone="sun">★ {place.ratingAverage.toFixed(1)} ({place.ratingCount})</Badge>}
       </div>
 
-      {place.description && <p className="mt-4 text-sm leading-relaxed text-slate-700">{place.description}</p>}
+      {place.description && <p className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{place.description}</p>}
 
       {typeof place.lat === "number" && typeof place.lng === "number" && (
         <Link href={`/${locale}/navigate/${place.id}`} className="mt-4 block">
@@ -151,7 +151,7 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
       </div>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-base font-semibold text-brand-950">{dict.explore.reviews}</h2>
+        <h2 className="mb-3 text-base font-semibold text-brand-950 dark:text-sand-50">{dict.explore.reviews}</h2>
 
         <div className="mb-5 rounded-2xl border border-slate-200 p-4">
           <div className="mb-2 flex gap-1">
@@ -178,13 +178,13 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
           {localReviews.map((review) => (
             <li key={review.id} className="rounded-xl bg-white p-3 shadow-[var(--shadow-card)]">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-brand-950">{review.userName}</p>
+                <p className="text-sm font-medium text-brand-950 dark:text-sand-50">{review.userName}</p>
                 <span className="text-xs text-amber-500">{"★".repeat(review.rating)}</span>
               </div>
-              {review.comment && <p className="mt-1 text-sm text-slate-600">{review.comment}</p>}
+              {review.comment && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{review.comment}</p>}
             </li>
           ))}
-          {localReviews.length === 0 && <p className="text-sm text-slate-500">{dict.explore.noReviews}</p>}
+          {localReviews.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.explore.noReviews}</p>}
         </ul>
       </section>
 

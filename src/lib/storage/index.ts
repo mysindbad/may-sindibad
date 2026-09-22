@@ -2,7 +2,7 @@ import "server-only";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 
 export interface StoredFile {
   url: string;
@@ -167,6 +167,40 @@ export async function deleteUpload(url: string): Promise<void> {
     return;
   }
   // Unrecognised URL: neither adapter can have written it, nothing to do.
+}
+
+export interface LoadedUpload {
+  stream: ReadableStream<Uint8Array>;
+  contentType: string;
+  contentLength?: number;
+}
+
+/**
+ * Serve a previously uploaded object back out. UPLOADS_PUBLIC_BASE_URL points
+ * at this app's own /media/* route (see src/app/media/[...path]/route.ts)
+ * rather than the bucket directly, so a plain S3-compatible bucket with no
+ * public-read policy still works - this reads with the same credentials
+ * saveUpload wrote with. Returns null for an unconfigured store or a missing
+ * key so the route can answer 404 either way.
+ */
+export async function loadUpload(key: string): Promise<LoadedUpload | null> {
+  const s3Config = readS3Config();
+  if (!s3Config) return null;
+
+  const client = s3ClientFor(s3Config);
+  try {
+    const result = await client.send(new GetObjectCommand({ Bucket: s3Config.bucket, Key: key }));
+    if (!result.Body) return null;
+    return {
+      stream: result.Body.transformToWebStream(),
+      contentType: result.ContentType ?? "application/octet-stream",
+      contentLength: result.ContentLength,
+    };
+  } catch (error) {
+    const name = error && typeof error === "object" && "name" in error ? (error as { name?: string }).name : undefined;
+    if (name === "NoSuchKey" || name === "NotFound") return null;
+    throw error;
+  }
 }
 
 /** Best-effort cleanup for files created by the local filesystem adapter. */

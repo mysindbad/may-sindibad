@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { localeNames } from "@/i18n/config";
 import { Badge, Button, Card } from "@/components/ui/primitives";
 import { InlineAlert, Skeleton } from "@/components/ui/feedback";
 import {
@@ -168,15 +169,17 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
     setAiReply(null);
     setAiUnavailable(false);
     const question =
-      "I am travelling to " + place.name + " in " + place.city + ", " + place.country +
-      ". I am " + formatDistance(reading.metresRemaining) + " away, heading " + HEADING_LABEL[reading.heading] +
-      ", travelling by " + (mode === "walking" ? "foot" : "car") +
-      ". Give me a short, practical plan for this trip and anything I should watch out for on the way.";
+      "I am already on my way to " + place.name + " in " + place.city + ", " + place.country +
+      " right now, travelling by " + (mode === "walking" ? "foot" : "car") +
+      ". This is live, in-progress navigation, not trip planning - do not suggest creating, adding to, or editing a trip in the app." +
+      " I am " + formatDistance(reading.metresRemaining) + " away, heading " + HEADING_LABEL[reading.heading] +
+      ". Give me a short, practical, real-time tip for the rest of this specific walk or drive: anything to watch out for right now on the way to this exact destination." +
+      " Respond only in " + localeNames[locale] + ".";
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({ message: question, localHour: new Date().getHours() }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.configured) {
@@ -216,8 +219,8 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
     <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-3xl flex-col gap-3 px-4 py-4 md:h-[calc(100dvh-64px)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-brand-950">{place.name}</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-lg font-semibold text-brand-950 dark:text-sand-50">{place.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {place.address ? place.address : place.city + ", " + place.country}
           </p>
         </div>
@@ -262,12 +265,12 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         <Card className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs text-slate-500">{dict.navigation.remaining}</p>
-              <p className="text-xl font-semibold text-brand-950">{formatDistance(reading.metresRemaining)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.remaining}</p>
+              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDistance(reading.metresRemaining)}</p>
             </div>
             <div className="text-end">
-              <p className="text-xs text-slate-500">{dict.navigation.eta}</p>
-              <p className="text-xl font-semibold text-brand-950">{formatDuration(remainingSeconds(plan, reading.metresRemaining))}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.eta}</p>
+              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDuration(remainingSeconds(plan, reading.metresRemaining))}</p>
             </div>
           </div>
 
@@ -275,7 +278,7 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
             <div className="h-full rounded-full bg-turquoise-500 transition-all" style={{ width: Math.round(done * 100) + "%" }} />
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
             <span>
               {dict.navigation.heading}: <strong>{HEADING_LABEL[reading.heading]}</strong>
             </span>
@@ -283,18 +286,18 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
           </div>
 
           <InlineAlert tone={guardianTone}>{guardianMessage}</InlineAlert>
-          {guardianState === "arrived" && <p className="text-sm text-slate-600">{dict.navigation.arrivedBody}</p>}
-          {plan.source === "estimate" && <p className="text-xs text-slate-500">{dict.navigation.estimateNotice}</p>}
+          {guardianState === "arrived" && <p className="text-sm text-slate-600 dark:text-slate-400">{dict.navigation.arrivedBody}</p>}
+          {plan.source === "estimate" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.estimateNotice}</p>}
         </Card>
       )}
 
       <Card className="space-y-2 p-3">
-        <p className="text-sm font-semibold text-brand-950">🛡️ {dict.navigation.guardian}</p>
-        <p className="text-xs text-slate-600">{dict.navigation.tipDaylight}</p>
-        <p className="text-xs text-slate-600">{dict.navigation.tipBattery}</p>
+        <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">🛡️ {dict.navigation.guardian}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.tipDaylight}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.tipBattery}</p>
 
         {aiReply && <InlineAlert tone="info">{aiReply}</InlineAlert>}
-        {aiUnavailable && <p className="text-xs text-slate-500">{dict.navigation.aiUnavailable}</p>}
+        {aiUnavailable && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.aiUnavailable}</p>}
 
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" variant="secondary" loading={aiBusy} disabled={!reading} onClick={() => void askSindbad()}>

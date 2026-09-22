@@ -57,13 +57,13 @@ export function SindbadMemoryPanel() {
   return (
     <Card className="space-y-3 p-4">
       <div>
-        <p className="text-sm font-semibold text-brand-950">🧠 {dict.sindbadMemory.title}</p>
-        <p className="text-xs text-slate-500">{dict.sindbadMemory.subtitle}</p>
+        <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">🧠 {dict.sindbadMemory.title}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{dict.sindbadMemory.subtitle}</p>
       </div>
 
       {memories === null && <Skeleton className="h-16 w-full" />}
 
-      {memories !== null && memories.length === 0 && <p className="text-sm text-slate-500">{dict.sindbadMemory.empty}</p>}
+      {memories !== null && memories.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.sindbadMemory.empty}</p>}
 
       {memories !== null && memories.length > 0 && (
         <>
@@ -71,8 +71,8 @@ export function SindbadMemoryPanel() {
             {memories.map((memory) => (
               <li key={memory.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-slate-500">{memory.key.replace(/_/g, " ")}</p>
-                  <p className="text-sm text-brand-950">{memory.value}</p>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{memory.key.replace(/_/g, " ")}</p>
+                  <p className="text-sm text-brand-950 dark:text-sand-50">{memory.value}</p>
                 </div>
                 <Button
                   size="sm"

@@ -41,9 +41,9 @@ export function PlaceCard({ place, locale, trustLabel }: { place: PlaceCardData;
           </div>
         )}
         <div className="space-y-1.5 p-3.5">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-brand-950">{place.name}</h3>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-brand-950 dark:text-sand-50">{place.name}</h3>
           <div className="flex items-center justify-between gap-2">
-            <p className="line-clamp-1 text-xs text-slate-500">
+            <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
               {place.city}, {place.country}
             </p>
             {place.ratingCount > 0 && (

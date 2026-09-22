@@ -48,8 +48,8 @@ export function ProviderOnboarding() {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-4 px-4 py-6">
-      <h1 className="text-xl font-semibold text-brand-950">{dict.marketplace.createListing}</h1>
-      <p className="text-sm text-slate-500">{dict.marketplace.becomeProviderBody}</p>
+      <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.marketplace.createListing}</h1>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{dict.marketplace.becomeProviderBody}</p>
 
       <div>
         <Label htmlFor="provider-name">{dict.marketplace.businessName}</Label>

@@ -17,8 +17,8 @@ export function MapPlaceCard({ place, onClose }: { place: PlaceCardData; onClose
     <Card className="pointer-events-auto w-full max-w-md p-3 shadow-[var(--shadow-elevated)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-brand-950">{place.name}</h3>
-          <p className="truncate text-xs text-slate-500">
+          <h3 className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{place.name}</h3>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
             {place.city}, {place.country}
           </p>
         </div>
@@ -26,7 +26,7 @@ export function MapPlaceCard({ place, onClose }: { place: PlaceCardData; onClose
           type="button"
           onClick={onClose}
           aria-label={dict.common.close}
-          className="shrink-0 rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          className="shrink-0 rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400"
         >
           ✕
         </button>

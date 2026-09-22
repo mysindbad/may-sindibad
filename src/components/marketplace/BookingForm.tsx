@@ -46,7 +46,7 @@ export function BookingForm({ providerId, services }: { providerId: string; serv
   }
 
   if (services.length === 0) {
-    return <p className="text-sm text-slate-500">{dict.bookings.noBookableServices}</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">{dict.bookings.noBookableServices}</p>;
   }
 
   const selectedService = services.find((s) => s.id === serviceId);

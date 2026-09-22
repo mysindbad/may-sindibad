@@ -10,10 +10,10 @@ export function TopBar() {
   const { user } = useAuth();
 
   return (
-    <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-brand-900/8 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
+    <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-brand-900/8 bg-white/90 px-4 py-3 backdrop-blur md:hidden dark:border-white/10 dark:bg-brand-950/90">
       <Link href={`/${locale}`} className="flex items-center gap-2">
         <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-lg bg-brand-800 text-base text-white">🧞</span>
-        <span className="text-base font-semibold text-brand-950">{dict.common.appName}</span>
+        <span className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.common.appName}</span>
       </Link>
       <div className="flex items-center gap-2">
         <LocaleSwitcher />

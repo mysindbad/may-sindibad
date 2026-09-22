@@ -561,6 +561,7 @@ export const communityPosts = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     kind: varchar("kind", { length: 20 }).notNull().default("moment"),
+    title: varchar("title", { length: 140 }),
     body: text("body").notNull(),
     placeId: uuid("place_id").references(() => places.id, { onDelete: "set null" }),
     tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),

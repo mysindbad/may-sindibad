@@ -57,8 +57,8 @@ export function NearbyDiscovery() {
 
   if (status === "idle" || status === "denied" || status === "error") {
     return (
-      <div className="rounded-2xl border border-dashed border-brand-900/15 bg-white/60 p-5 text-center">
-        <p className="mb-3 text-sm text-slate-600">
+      <div className="rounded-2xl border border-dashed border-brand-900/15 bg-white/60 p-5 text-center dark:border-white/15 dark:bg-white/5">
+        <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
           {status === "denied" ? dict.errors.forbidden : status === "error" ? dict.common.somethingWentWrong : dict.home.emptyNearby}
         </p>
         <Button variant="secondary" size="sm" onClick={handleEnableLocation}>
@@ -82,7 +82,7 @@ export function NearbyDiscovery() {
 
   return (
     <div>
-      {city && <p className="mb-2 text-xs text-slate-500">{city}</p>}
+      {city && <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{city}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {nearby.map((place) => (
           <PlaceCard key={place.id} place={place} locale={locale} trustLabel={placeTrustLabel(place.sourceType, dict)} />

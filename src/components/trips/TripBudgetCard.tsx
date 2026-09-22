@@ -19,14 +19,14 @@ export function TripBudgetCard({
   return (
     <Card className="space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-brand-950">{dict.tripBudget.title}</p>
+        <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{dict.tripBudget.title}</p>
         {summary.overBudget && <Badge tone="danger">{dict.tripBudget.over}</Badge>}
       </div>
 
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <div>
-          <p className="text-xs text-slate-500">{dict.tripBudget.planned}</p>
-          <p className="text-lg font-semibold text-brand-950">
+          <p className="text-xs text-slate-500 dark:text-slate-400">{dict.tripBudget.planned}</p>
+          <p className="text-lg font-semibold text-brand-950 dark:text-sand-50">
             {formatCurrency(summary.estimatedTotal, summary.currency, locale)}
           </p>
         </div>
@@ -34,20 +34,20 @@ export function TripBudgetCard({
         {hasBudget ? (
           <>
             <div>
-              <p className="text-xs text-slate-500">{dict.tripBudget.budget}</p>
-              <p className="text-lg font-semibold text-brand-950">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dict.tripBudget.budget}</p>
+              <p className="text-lg font-semibold text-brand-950 dark:text-sand-50">
                 {formatCurrency(summary.budgetAmount ?? 0, summary.currency, locale)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">{dict.tripBudget.remaining}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dict.tripBudget.remaining}</p>
               <p className={summary.overBudget ? "text-lg font-semibold text-red-600" : "text-lg font-semibold text-turquoise-500"}>
                 {formatCurrency(summary.remaining ?? 0, summary.currency, locale)}
               </p>
             </div>
           </>
         ) : (
-          <p className="text-xs text-slate-500">{dict.tripBudget.noBudget}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{dict.tripBudget.noBudget}</p>
         )}
       </div>
 
@@ -65,7 +65,7 @@ export function TripBudgetCard({
 
       {/* Unpriced activities are surfaced, never folded into the total as zero. */}
       {summary.unestimatedItems > 0 && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {dict.tripBudget.unpriced}: {summary.unestimatedItems}
         </p>
       )}

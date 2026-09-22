@@ -113,7 +113,7 @@ export function SettingsForm({ user }: { user: SessionUser }) {
 
   return (
     <div className="mx-auto max-w-md space-y-6 px-4 py-6">
-      <h1 className="text-xl font-semibold text-brand-950">{dict.settings.title}</h1>
+      <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.settings.title}</h1>
 
       <div className="flex items-center gap-4">
         <div className="relative">
@@ -130,7 +130,7 @@ export function SettingsForm({ user }: { user: SessionUser }) {
           <input ref={avatarInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="avatar-input" />
           <label
             htmlFor="avatar-input"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-brand-800 hover:bg-slate-50"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-brand-800 hover:bg-slate-50 dark:border-white/15 dark:text-sky-300 dark:hover:bg-white/5"
           >
             {avatarBusy ? dict.common.loading : `📷 ${dict.settings.changePhoto}`}
           </label>

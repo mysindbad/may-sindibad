@@ -69,7 +69,7 @@ export function TripWizard() {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-xl space-y-5 px-4 py-6">
-      <h1 className="text-xl font-semibold text-brand-950">{dict.trips.newTrip}</h1>
+      <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.trips.newTrip}</h1>
 
       <div>
         <Label>{dict.trips.wizardDestination}</Label>
@@ -127,7 +127,7 @@ export function TripWizard() {
               className={
                 interests.includes(interest)
                   ? "rounded-full bg-brand-800 px-3 py-1.5 text-xs font-medium text-white"
-                  : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600"
+                  : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400"
               }
             >
               {interest}
@@ -141,7 +141,7 @@ export function TripWizard() {
         <Textarea id="trip-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-slate-600">
+      <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
         <input type="checkbox" checked={generate} onChange={(e) => setGenerate(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
         {dict.trips.generateWithAi}
       </label>

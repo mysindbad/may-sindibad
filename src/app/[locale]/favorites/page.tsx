@@ -63,8 +63,8 @@ export default async function FavoritesPage({ params }: { params: Promise<{ loca
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
       <div>
-        <h1 className="text-xl font-semibold text-brand-950">{dict.favorites.title}</h1>
-        <p className="text-sm text-slate-500">{dict.favorites.subtitle}</p>
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.favorites.title}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{dict.favorites.subtitle}</p>
       </div>
 
       {isEmpty ? (
@@ -73,7 +73,7 @@ export default async function FavoritesPage({ params }: { params: Promise<{ loca
         <>
           {savedPlaces.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-brand-950">{dict.favorites.places}</h2>
+              <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.favorites.places}</h2>
               <ul className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 {savedPlaces.map((place) => (
                   <li key={place.id}>
@@ -86,15 +86,15 @@ export default async function FavoritesPage({ params }: { params: Promise<{ loca
 
           {savedProviders.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-brand-950">{dict.favorites.businesses}</h2>
+              <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.favorites.businesses}</h2>
               <ul className="space-y-3">
                 {savedProviders.map((provider) => (
                   <li key={provider.id}>
                     <Link href={"/" + locale + "/marketplace/" + provider.id}>
                       <Card className="flex items-center justify-between p-4 hover:shadow-[var(--shadow-elevated)]">
                         <div>
-                          <p className="text-sm font-semibold text-brand-950">{provider.name}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{provider.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             {provider.city}, {provider.country}
                           </p>
                         </div>

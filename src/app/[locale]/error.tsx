@@ -19,7 +19,7 @@ export default function LocaleError({ error, reset }: { error: Error & { digest?
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
       <span className="text-4xl">🧭</span>
-      <h1 className="text-lg font-semibold text-brand-950">{dict.common.somethingWentWrong}</h1>
+      <h1 className="text-lg font-semibold text-brand-950 dark:text-sand-50">{dict.common.somethingWentWrong}</h1>
       <Button onClick={reset}>{dict.common.retry}</Button>
     </div>
   );

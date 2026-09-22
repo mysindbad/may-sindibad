@@ -46,8 +46,8 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
       <div>
-        <h1 className="text-xl font-semibold text-brand-950">{provider.name}</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{provider.name}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {provider.city}, {provider.country}
         </p>
         <Badge tone={provider.verificationStatus === "verified" ? "lime" : "neutral"} className="mt-2">
@@ -72,16 +72,16 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
 
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-brand-950">{dict.bookings.providerRequests}</h2>
+        <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.bookings.providerRequests}</h2>
         {providerBookings.length === 0 ? (
-          <p className="text-sm text-slate-500">{dict.bookings.noProviderRequests}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{dict.bookings.noProviderRequests}</p>
         ) : (
           providerBookings.map(({ booking, serviceName }) => (
             <Card key={booking.id} className="space-y-3 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-brand-950">{serviceName ?? dict.bookings.title}</p>
-                  <p className="text-xs text-slate-500">{booking.startDate ?? "—"} · {booking.guestsCount} · {formatCurrency(booking.totalAmount, booking.currency, locale)}</p>
+                  <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{serviceName ?? dict.bookings.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{booking.startDate ?? "—"} · {booking.guestsCount} · {formatCurrency(booking.totalAmount, booking.currency, locale)}</p>
                 </div>
                 <BookingStatusBadge status={booking.status} dict={dict} />
               </div>
@@ -92,14 +92,14 @@ export default async function ProviderDashboardPage({ params }: { params: Promis
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-brand-950">{dict.marketplace.services}</h2>
-        {services.length === 0 && <p className="text-sm text-slate-500">{dict.providerTools.noServices}</p>}
+        <h2 className="text-base font-semibold text-brand-950 dark:text-sand-50">{dict.marketplace.services}</h2>
+        {services.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.providerTools.noServices}</p>}
         {services.map((service) => (
           <Card key={service.id} className="p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-brand-950">{service.name}</p>
-                <p className="text-xs text-slate-500">{categoryLabel(service.category, dict)}</p>
+                <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{service.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{categoryLabel(service.category, dict)}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {!service.isActive && <Badge tone="neutral">{dict.providerTools.inactive}</Badge>}

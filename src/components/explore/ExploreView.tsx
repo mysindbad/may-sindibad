@@ -81,7 +81,7 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
             type="button"
             onClick={() => setView("list")}
             aria-pressed={view === "list"}
-            className={cn("px-3 py-2 text-sm font-medium", view === "list" ? "bg-brand-800 text-white" : "bg-white text-slate-600")}
+            className={cn("px-3 py-2 text-sm font-medium", view === "list" ? "bg-brand-800 text-white" : "bg-white text-slate-600 dark:text-slate-400")}
           >
             {dict.explore.listView}
           </button>
@@ -89,7 +89,7 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
             type="button"
             onClick={() => setView("map")}
             aria-pressed={view === "map"}
-            className={cn("px-3 py-2 text-sm font-medium", view === "map" ? "bg-brand-800 text-white" : "bg-white text-slate-600")}
+            className={cn("px-3 py-2 text-sm font-medium", view === "map" ? "bg-brand-800 text-white" : "bg-white text-slate-600 dark:text-slate-400")}
           >
             {dict.explore.mapView}
           </button>

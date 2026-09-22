@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Cairo } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
@@ -9,7 +10,23 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { TimezoneSync } from "@/components/system/TimezoneSync";
+import { ThemeSync } from "@/components/system/ThemeSync";
 import { ServiceWorkerRegistration } from "@/components/system/ServiceWorkerRegistration";
+
+// Runs before hydration so a night visit paints dark immediately instead of
+// flashing light first. ThemeSync (a client component) keeps this in sync
+// afterwards, e.g. if the app is left open across the day/night boundary.
+const THEME_INIT_SCRIPT = `(function(){try{var h=new Date().getHours();if(h<6||h>=19)document.documentElement.classList.add('dark');}catch(e){}})();`;
+
+// A single elegant type family for the whole app, Arabic and Latin alike -
+// one consistent look instead of each OS/browser falling back to whatever
+// generic Arabic font it happens to ship with.
+const sindbadFont = Cairo({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-sindbad",
+  display: "swap",
+});
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -42,11 +59,15 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   const dir = isRtl(locale) ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} className={sindbadFont.variable}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="antialiased">
         <LocaleProvider locale={locale} dict={dict} dir={dir}>
           <AuthProvider initialUser={user}>
             <TimezoneSync />
+            <ThemeSync />
             <ServiceWorkerRegistration />
             <AppShell>{children}</AppShell>
           </AuthProvider>
