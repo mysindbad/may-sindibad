@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/session";
-import { deleteLocalStoredUpload, MAX_UPLOAD_REQUEST_BYTES, saveUpload, UploadStorageUnavailableError, validateImageSignature, validateUpload } from "@/lib/storage";
+import { deleteUpload, MAX_UPLOAD_REQUEST_BYTES, saveUpload, UploadStorageUnavailableError, validateImageSignature, validateUpload } from "@/lib/storage";
 import { media } from "@/db/schema";
 import { db } from "@/db";
 import { uploadRequestSchema } from "@/lib/validation";
@@ -59,14 +59,14 @@ export async function POST(request: Request) {
         { status: 201 },
       );
     } catch (error) {
-      // Keep the local development adapter consistent with the database. If the
-      // media row cannot be persisted, best-effort remove the just-written file
-      // instead of leaving an untracked orphan on disk. Cleanup failure must not
-      // hide the authoritative database error.
+      // Keep storage consistent with the database. If the media row cannot be
+      // persisted, best-effort remove the just-written file (local or S3)
+      // instead of leaving an untracked orphan. Cleanup failure must not hide
+      // the authoritative database error.
       try {
-        await deleteLocalStoredUpload(stored.url);
+        await deleteUpload(stored.url);
       } catch (cleanupError) {
-        console.error("Failed to clean up orphaned local upload after media insert failure", cleanupError);
+        console.error("Failed to clean up orphaned upload after media insert failure", cleanupError);
       }
       throw error;
     }
