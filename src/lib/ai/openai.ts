@@ -59,6 +59,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
     }>(response, MAX_AI_RESPONSE_BYTES);
 
     const message = json.choices?.[0]?.message;
+    if (!message) {
+      // Nothing in the expected OpenAI-compatible shape ({choices[0].message}).
+      // Log the actual shape (truncated, no secrets) so a misconfigured
+      // AI_API_BASE_URL / AI_MODEL pairing is diagnosable instead of silently
+      // producing the generic "couldn't find an answer" fallback.
+      console.error("AI provider returned an unexpected response shape", JSON.stringify(json).slice(0, 500));
+    }
     const toolCalls: AiToolCall[] = (message?.tool_calls ?? []).map((call) => {
       let parsedArgs: Record<string, unknown> = {};
       try {
