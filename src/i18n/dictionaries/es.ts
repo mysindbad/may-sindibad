@@ -239,6 +239,8 @@ const es = {
     yourTrips: "Tus viajes",
     yourBookings: "Tus reservas",
     accountSettings: "Ajustes de la cuenta",
+    planningSection: "Planificación",
+    accountSection: "Cuenta",
   },
   settings: {
     title: "Ajustes",

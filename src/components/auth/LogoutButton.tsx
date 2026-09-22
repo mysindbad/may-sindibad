@@ -20,5 +20,13 @@ export function LogoutButton() {
     router.refresh();
   }
 
-  return <ConfirmButton label={dict.nav.logout} confirmLabel={dict.auth.logoutConfirm} onConfirm={handleLogout} variant="secondary" />;
+  return (
+    <ConfirmButton
+      label={dict.nav.logout}
+      confirmLabel={dict.auth.logoutConfirm}
+      onConfirm={handleLogout}
+      variant="secondary"
+      className="w-full"
+    />
+  );
 }

@@ -5,7 +5,7 @@ import { itineraryItems, places, tripDays, trips } from "@/db/schema";
 import type { AiToolDefinition } from "./provider";
 import { escapeLikePattern, normalizeAiToolText } from "./tool-input";
 import type { OwnerContext } from "@/lib/auth/owner-context";
-import { addPlaceToTrip, moveItineraryItem, removeItineraryItem, summarizeTripBudget } from "@/lib/trips/actions";
+import { addPlaceToTrip, createTrip, moveItineraryItem, removeItineraryItem, summarizeTripBudget } from "@/lib/trips/actions";
 import { loadOwnedTrip } from "@/lib/trips/ownership";
 import { forgetMemory, isMemoryKind, listMemories, rememberPreference, MEMORY_KINDS } from "@/lib/memory/user-memory";
 
@@ -27,6 +27,25 @@ export interface AiToolContext {
 }
 
 export const AI_TOOLS: AiToolDefinition[] = [
+  {
+    name: "create_trip",
+    description:
+      "Create a brand-new, empty trip for the traveller (destination, dates, travellers, budget) so it is saved in My Sindbad, not just described in this chat. Use this whenever the traveller wants to plan a trip and does not already have one for this conversation - ask for whatever of destination, dates or budget is missing first, never invent them. After creating it, use the returned trip id for add_place_to_trip so places actually land in it.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short trip title, e.g. 'Marrakech getaway'. Invent a reasonable one if the traveller did not give one." },
+        destinationCity: { type: "string", description: "Destination city" },
+        destinationCountry: { type: "string", description: "Destination country" },
+        startDate: { type: "string", description: "Start date, YYYY-MM-DD" },
+        endDate: { type: "string", description: "End date, YYYY-MM-DD, on or after startDate" },
+        travelers: { type: "number", description: "Number of travellers, defaults to 1" },
+        budgetAmount: { type: "number", description: "Optional total budget" },
+        budgetCurrency: { type: "string", description: "Optional 3-letter currency code, e.g. USD. Defaults to USD." },
+      },
+      required: ["destinationCity", "destinationCountry", "startDate", "endDate"],
+    },
+  },
   {
     name: "search_places",
     description: "Search My Sindbad's verified places database by city, optional country, and optional keyword.",
@@ -150,6 +169,8 @@ const ACTION_MESSAGE: Record<string, string> = {
   place_not_found: "That place id does not match any place in the database.",
   item_not_found: "That itinerary item does not exist.",
   item_booked: "That activity is linked to a booking, so it cannot be changed here.",
+  invalid_dates: "The end date must be on or after the start date.",
+  trip_too_long: "A trip can span at most 365 days.",
 };
 
 export async function executeTool(
@@ -159,6 +180,57 @@ export async function executeTool(
 ): Promise<unknown> {
   const { owner } = context;
   const hasOwner = Boolean(owner.userId || owner.guestId);
+
+  if (name === "create_trip") {
+    const cityInput = normalizeAiToolText(args.destinationCity, 120, true);
+    const countryInput = normalizeAiToolText(args.destinationCountry, 120, true);
+    const titleInput = normalizeAiToolText(args.title, 200);
+    if (!cityInput.ok || !cityInput.value) return { error: "destinationCity is required." };
+    if (!countryInput.ok || !countryInput.value) return { error: "destinationCountry is required." };
+    if (!titleInput.ok) return { error: "title is invalid." };
+
+    const startDate = typeof args.startDate === "string" ? args.startDate.trim() : "";
+    const endDate = typeof args.endDate === "string" ? args.endDate.trim() : "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      return { error: "startDate and endDate are required, as YYYY-MM-DD." };
+    }
+
+    const travelersRaw = Number(args.travelers);
+    const travelers = Number.isFinite(travelersRaw) ? Math.min(Math.max(Math.trunc(travelersRaw), 1), 30) : 1;
+
+    let budgetAmount: number | undefined;
+    if (args.budgetAmount !== undefined && args.budgetAmount !== null) {
+      const parsed = Number(args.budgetAmount);
+      if (Number.isFinite(parsed) && parsed >= 0) budgetAmount = Math.min(parsed, 1_000_000);
+    }
+
+    const currencyInput = normalizeAiToolText(args.budgetCurrency, 3);
+    const budgetCurrency = currencyInput.ok && currencyInput.value && /^[A-Za-z]{3}$/.test(currencyInput.value) ? currencyInput.value.toUpperCase() : "USD";
+
+    const result = await createTrip({
+      title: titleInput.value || `${cityInput.value} trip`,
+      destinationCity: cityInput.value,
+      destinationCountry: countryInput.value,
+      startDate,
+      endDate,
+      travelers,
+      budgetAmount,
+      budgetCurrency,
+      owner,
+    });
+    if (!result.ok) return { error: ACTION_MESSAGE[result.error] ?? "That trip could not be created." };
+    return {
+      created: {
+        tripId: result.data.trip.id,
+        title: result.data.trip.title,
+        destinationCity: result.data.trip.destinationCity,
+        destinationCountry: result.data.trip.destinationCountry,
+        startDate: result.data.trip.startDate,
+        endDate: result.data.trip.endDate,
+        dayCount: result.data.dayCount,
+      },
+    };
+  }
 
   if (name === "search_places") {
     const cityInput = normalizeAiToolText(args.city, 120, true);

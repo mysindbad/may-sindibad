@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { Button } from "./primitives";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -52,6 +53,7 @@ export function ConfirmButton({
   variant?: "danger" | "secondary";
   className?: string;
 }) {
+  const { dict } = useLocale();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -80,10 +82,10 @@ export function ConfirmButton({
           }
         }}
       >
-        Yes
+        {dict.common.confirm}
       </Button>
       <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-        No
+        {dict.common.cancel}
       </Button>
     </div>
   );

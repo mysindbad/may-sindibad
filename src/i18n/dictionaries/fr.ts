@@ -239,6 +239,8 @@ const fr = {
     yourTrips: "Vos voyages",
     yourBookings: "Vos réservations",
     accountSettings: "Paramètres du compte",
+    planningSection: "Planification",
+    accountSection: "Compte",
   },
   settings: {
     title: "Paramètres",

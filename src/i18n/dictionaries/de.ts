@@ -239,6 +239,8 @@ const de = {
     yourTrips: "Deine Reisen",
     yourBookings: "Deine Buchungen",
     accountSettings: "Kontoeinstellungen",
+    planningSection: "Planung",
+    accountSection: "Konto",
   },
   settings: {
     title: "Einstellungen",

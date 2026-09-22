@@ -71,15 +71,21 @@ export function ChatWindow() {
   const suggestions = [dict.ai.emptySuggestion1, dict.ai.emptySuggestion2, dict.ai.emptySuggestion3];
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-56px)] max-w-2xl flex-col px-4 py-4 md:h-[calc(100dvh-64px)]">
+    <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-2xl flex-col px-4 py-4 md:h-[calc(100dvh-64px)]">
       <div className="mb-3">
         <h1 className="text-lg font-semibold text-brand-950">✨ {dict.ai.title}</h1>
         <p className="text-xs text-slate-500">{dict.ai.scopeNotice}</p>
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto pb-4">
+      <div
+        ref={scrollRef}
+        className={messages.length === 0 && !notConfigured ? "flex flex-1 items-center overflow-y-auto" : "flex-1 space-y-3 overflow-y-auto pb-4"}
+      >
         {messages.length === 0 && !notConfigured && (
-          <div className="rounded-2xl border border-dashed border-brand-900/15 bg-white/60 p-5 text-center">
+          <div className="w-full rounded-3xl border border-dashed border-brand-900/15 bg-white/60 p-6 text-center">
+            <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-800 to-sky-500 text-2xl">
+              🧞
+            </span>
             <p className="mb-3 text-sm font-medium text-brand-950">{dict.ai.emptyTitle}</p>
             <div className="flex flex-col gap-2">
               {suggestions.map((s) => (

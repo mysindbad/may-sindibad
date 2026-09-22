@@ -235,6 +235,8 @@ const en = {
     yourTrips: "Your trips",
     yourBookings: "Your bookings",
     accountSettings: "Account settings",
+    planningSection: "Planning",
+    accountSection: "Account",
   },
   settings: {
     title: "Settings",

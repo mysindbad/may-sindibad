@@ -238,6 +238,8 @@ const ar = {
     yourTrips: "رحلاتك",
     yourBookings: "حجوزاتك",
     accountSettings: "إعدادات الحساب",
+    planningSection: "التخطيط للرحلات",
+    accountSection: "الحساب",
   },
   settings: {
     title: "الإعدادات",

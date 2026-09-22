@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { itineraryItems, places, tripDays, trips } from "@/db/schema";
 import { loadOwnedTrip } from "./ownership";
 import type { OwnerContext } from "@/lib/auth/owner-context";
+import { isoDateDifferenceDays } from "@/lib/domain/date";
+import { toClientTripView } from "./client-view";
 
 // The single guarded place where a trip's contents change.
 //
@@ -19,7 +21,9 @@ export type TripActionError =
   | "day_not_found"
   | "place_not_found"
   | "item_not_found"
-  | "item_booked";
+  | "item_booked"
+  | "invalid_dates"
+  | "trip_too_long";
 
 export type TripActionResult<T> = { ok: true; data: T } | { ok: false; error: TripActionError };
 
@@ -63,6 +67,78 @@ async function viewOf(itemId: string): Promise<ItineraryItemView | null> {
     .where(eq(itineraryItems.id, itemId))
     .limit(1);
   return row ?? null;
+}
+
+function dateRangeDays(startDate: string, endDate: string): string[] {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
+  const days: string[] = [];
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days.length > 0 ? days : [startDate];
+}
+
+export interface NewTripInput {
+  title: string;
+  destinationCity: string;
+  destinationCountry: string;
+  startDate: string;
+  endDate: string;
+  travelers?: number;
+  budgetAmount?: number;
+  budgetCurrency?: string;
+  travelStyle?: string;
+  notes?: string;
+  owner: OwnerContext;
+}
+
+/**
+ * Create a new, empty trip (with its day rows) for the caller's own guest
+ * session or account. This is the same creation logic the manual "new trip"
+ * form uses; Sindbad AI's create_trip tool calls it directly so a trip
+ * started in conversation is a real trip, not something the traveller has
+ * to re-enter by hand.
+ */
+export async function createTrip(
+  input: NewTripInput,
+): Promise<TripActionResult<{ trip: ReturnType<typeof toClientTripView>; dayCount: number }>> {
+  const tripDuration = isoDateDifferenceDays(input.startDate, input.endDate);
+  if (tripDuration === null || tripDuration < 0) return fail("invalid_dates");
+  if (tripDuration > 364) return fail("trip_too_long");
+
+  const dayDates = dateRangeDays(input.startDate, input.endDate);
+
+  const { trip, insertedDays } = await db.transaction(async (tx) => {
+    const [createdTrip] = await tx
+      .insert(trips)
+      .values({
+        userId: input.owner.userId,
+        guestId: input.owner.guestId,
+        title: input.title,
+        destinationCity: input.destinationCity,
+        destinationCountry: input.destinationCountry,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        travelers: input.travelers ?? 1,
+        budgetAmount: input.budgetAmount?.toString(),
+        budgetCurrency: input.budgetCurrency ?? "USD",
+        travelStyle: input.travelStyle,
+        notes: input.notes,
+        status: "draft",
+        generatedBy: "sindbad",
+      })
+      .returning();
+
+    const createdDays = await tx
+      .insert(tripDays)
+      .values(dayDates.map((date, index) => ({ tripId: createdTrip.id, dayIndex: index, date })))
+      .returning();
+
+    return { trip: createdTrip, insertedDays: createdDays };
+  });
+
+  return { ok: true, data: { trip: toClientTripView(trip), dayCount: insertedDays.length } };
 }
 
 /**

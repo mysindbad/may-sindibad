@@ -239,6 +239,8 @@ const ru = {
     yourTrips: "Ваши поездки",
     yourBookings: "Ваши бронирования",
     accountSettings: "Настройки аккаунта",
+    planningSection: "Планирование",
+    accountSection: "Аккаунт",
   },
   settings: {
     title: "Настройки",

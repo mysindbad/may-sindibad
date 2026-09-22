@@ -25,6 +25,8 @@ const STATUS: Record<TripActionError, number> = {
   place_not_found: 404,
   item_not_found: 404,
   item_booked: 409,
+  invalid_dates: 422,
+  trip_too_long: 422,
 };
 
 const MESSAGE: Record<TripActionError, string> = {
@@ -33,6 +35,8 @@ const MESSAGE: Record<TripActionError, string> = {
   day_not_found: "That day is not part of this trip.",
   place_not_found: "Place not found.",
   item_not_found: "Itinerary item not found.",
+  invalid_dates: "The end date must be on or after the start date.",
+  trip_too_long: "A trip can span at most 365 days.",
   item_booked: "This item is linked to a booking and cannot be changed.",
 };
 
