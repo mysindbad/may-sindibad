@@ -26,15 +26,23 @@ export function NearbyDiscovery() {
       async (position) => {
         setStatus("loading");
         try {
-          const params = new URLSearchParams({
-            lat: String(position.coords.latitude),
-            lng: String(position.coords.longitude),
-            radiusKm: "75",
-            limit: "6",
-          });
-          const res = await fetch(`/api/places?${params.toString()}`);
-          if (!res.ok) throw new Error("nearby lookup failed");
-          const data = (await res.json()) as { places?: PlaceCardData[]; contextCity?: string | null };
+          // The traveller may be just outside the first, tighter radius -
+          // widen the search before giving up rather than showing "nothing
+          // nearby" when a real result was 80km away instead of 75.
+          const RADII_KM = [75, 250];
+          let data: { places?: PlaceCardData[]; contextCity?: string | null } = {};
+          for (const radiusKm of RADII_KM) {
+            const params = new URLSearchParams({
+              lat: String(position.coords.latitude),
+              lng: String(position.coords.longitude),
+              radiusKm: String(radiusKm),
+              limit: "6",
+            });
+            const res = await fetch(`/api/places?${params.toString()}`);
+            if (!res.ok) throw new Error("nearby lookup failed");
+            data = await res.json();
+            if ((data.places?.length ?? 0) > 0) break;
+          }
           setNearby(data.places ?? []);
           setCity(data.contextCity ?? null);
           setStatus("ready");

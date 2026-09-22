@@ -213,7 +213,7 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
   const done = reading ? progressRatio(totalMetres, reading.metresRemaining) : 0;
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-56px)] max-w-3xl flex-col gap-3 px-4 py-4 md:h-[calc(100dvh-64px)]">
+    <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-3xl flex-col gap-3 px-4 py-4 md:h-[calc(100dvh-64px)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-brand-950">{place.name}</h1>

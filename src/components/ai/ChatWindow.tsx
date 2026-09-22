@@ -34,7 +34,7 @@ export function ChatWindow() {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, conversationId }),
+        body: JSON.stringify({ message: text, conversationId, localHour: new Date().getHours() }),
       });
       const data = await res.json();
 

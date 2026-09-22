@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth, type SessionUser } from "@/components/auth/AuthProvider";
@@ -17,6 +17,48 @@ export function SettingsForm({ user }: { user: SessionUser }) {
   const [homeCity, setHomeCity] = useState(user.homeCity ?? "");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setAvatarBusy(true);
+    setResult(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("ownerType", "avatar");
+      const uploadRes = await fetch("/api/uploads", { method: "POST", body: form });
+      const uploadData = await uploadRes.json().catch(() => ({}));
+      if (uploadRes.status === 401) {
+        router.push(buildLoginPath(locale, `/${locale}/settings`));
+        return;
+      }
+      if (!uploadRes.ok) {
+        setResult({ tone: "error", text: uploadData.error ?? dict.common.somethingWentWrong });
+        return;
+      }
+      const patchRes = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: uploadData.media.url }),
+      });
+      const patchData = await patchRes.json().catch(() => ({}));
+      if (!patchRes.ok) {
+        setResult({ tone: "error", text: patchData.error ?? dict.common.somethingWentWrong });
+        return;
+      }
+      setAvatarUrl(patchData.user.avatarUrl);
+      setUser(patchData.user);
+    } catch {
+      setResult({ tone: "error", text: dict.errors.network });
+    } finally {
+      setAvatarBusy(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -72,6 +114,28 @@ export function SettingsForm({ user }: { user: SessionUser }) {
   return (
     <div className="mx-auto max-w-md space-y-6 px-4 py-6">
       <h1 className="text-xl font-semibold text-brand-950">{dict.settings.title}</h1>
+
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+            <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
+          ) : (
+            <div className="grid h-16 w-16 place-items-center rounded-full bg-brand-800 text-xl font-semibold text-white">
+              {name.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
+        <div>
+          <input ref={avatarInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="avatar-input" />
+          <label
+            htmlFor="avatar-input"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-brand-800 hover:bg-slate-50"
+          >
+            {avatarBusy ? dict.common.loading : `📷 ${dict.settings.changePhoto}`}
+          </label>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

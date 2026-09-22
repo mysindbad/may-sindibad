@@ -82,6 +82,8 @@ export const aiChatSchema = z.object({
   conversationId: z.string().uuid().optional(),
   message: z.string().trim().min(1).max(4000),
   tripId: z.string().uuid().optional(),
+  /** The traveller's local hour (0-23), so Sindbad can greet them appropriately. */
+  localHour: z.number().int().min(0).max(23).optional(),
 });
 
 export const contributionCreateSchema = z

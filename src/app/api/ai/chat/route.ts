@@ -16,9 +16,10 @@ import { describeMemories, listMemories } from "@/lib/memory/user-memory";
 
 export const dynamic = "force-dynamic";
 
-const SYSTEM_PROMPT = `You are Sindbad AI, the travel-only assistant embedded in the My Sindbad app.
-Scope: destinations, itineraries, places, restaurants, hotels, activities, transport and bookings available inside My Sindbad.
-If asked about anything unrelated to travel, briefly decline and redirect to travel planning.
+const SYSTEM_PROMPT = `You are Sindbad AI, the warm and knowledgeable travel companion embedded in the My Sindbad app.
+Talk like a genuinely helpful, well-travelled friend, not a narrow script. Answer general questions naturally and share what you know - the traveller should feel like they can ask you almost anything and get a real answer, not a wall of "I can't help with that." Your real specialty, where you can actually take action, is travel inside My Sindbad: destinations, itineraries, places, restaurants, hotels, activities, transport and bookings.
+Only decline when a request has nothing to do with travel or this conversation at all (for example writing unrelated code, or something that has nothing to do with the traveller's trip) - then say plainly and politely that it is outside what you can help with here, and steer back to travel. Do not decline ordinary travel-adjacent questions (weather, currency, customs, phrases, general facts about a place) just because they are not a database lookup.
+If this is the first message of a new conversation, open with a short, natural greeting - if you were told the time of day, let it fit that (e.g. good morning); otherwise keep it simple and warm. Do not repeat a greeting in later replies in the same conversation.
 Use the search_places tool to ground recommendations in real data instead of inventing places.
 If search_places finds nothing for a city, say so plainly instead of going quiet or inventing a place - My Sindbad simply does not have verified listings there yet. You can still help plan the trip itself (create_trip, dates, budget, travellers) for any destination, and you may share general, well-known context about it from your own knowledge, but always label that clearly as general information rather than a verified My Sindbad place.
 If the traveller wants to plan a trip and this conversation has no trip yet, use list_my_trips first to check whether they already have one; if not, ask for whatever of destination, dates or budget they have not given you yet, then call create_trip with it. Never invent a destination or dates the traveller did not give you. After create_trip succeeds, use the tripId it returns for every trip tool call in the rest of this conversation.
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   const body = json.body;
   const parsed = aiChatSchema.safeParse(body);
   if (!parsed.success) return zodErrorResponse(parsed.error);
-  const { message, tripId } = parsed.data;
+  const { message, tripId, localHour } = parsed.data;
 
   if (tripId) {
     const { trip, allowed } = await loadOwnedTrip(tripId, owner);
@@ -103,6 +104,11 @@ export async function POST(request: Request) {
   // their standing preferences instead of asking the same questions again.
   // Guests have no profile, and the block is omitted entirely when empty.
   let systemContent = SYSTEM_PROMPT;
+  if (typeof localHour === "number") {
+    const period =
+      localHour < 5 ? "late night" : localHour < 12 ? "morning" : localHour < 17 ? "afternoon" : localHour < 21 ? "evening" : "night";
+    systemContent += `\n\nIt is currently ${period} where the traveller is.`;
+  }
   if (owner.userId) {
     const remembered = describeMemories(await listMemories(owner.userId));
     if (remembered) {
@@ -144,7 +150,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("AI provider call failed", error);
     return NextResponse.json(
-      { conversationId, configured: true, userMessage: toClientMessageView(userMessage), assistantMessage: null, error: "The AI provider is temporarily unavailable. Please try again." },
+      { conversationId, configured: true, userMessage: toClientMessageView(userMessage), assistantMessage: null, error: "Something went wrong. Please try again." },
       { status: 502 },
     );
   }

@@ -57,7 +57,7 @@ export function ExploreView({ initialCity }: { initialCity: string }) {
   const selectedPlace = useMemo(() => places.find((place) => place.id === selectedId) ?? null, [places, selectedId]);
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-56px)] max-w-6xl flex-col px-4 py-4 md:h-[calc(100dvh-64px)]">
+    <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-6xl flex-col px-4 py-4 md:h-[calc(100dvh-64px)]">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <form
           className="flex flex-1 min-w-[200px] gap-2"

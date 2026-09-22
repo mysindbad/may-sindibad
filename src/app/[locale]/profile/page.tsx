@@ -60,9 +60,18 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
     <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
       <div className="rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-sky-600 p-5 text-white shadow-[var(--shadow-elevated)] sm:p-6">
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/15 text-2xl font-semibold ring-2 ring-white/30 backdrop-blur-sm">
-            {user.name.slice(0, 1).toUpperCase()}
-          </div>
+          {user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white/30"
+            />
+          ) : (
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/15 text-2xl font-semibold ring-2 ring-white/30 backdrop-blur-sm">
+              {user.name.slice(0, 1).toUpperCase()}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">{user.name}</p>
             <p className="truncate text-sm text-white/70">{user.email}</p>
