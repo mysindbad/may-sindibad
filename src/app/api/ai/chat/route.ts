@@ -115,20 +115,25 @@ export async function POST(request: Request) {
   const messages: AiMessage[] = [{ role: "system", content: systemContent }, ...history.map((h) => ({ role: h.role, content: h.content }))];
 
   try {
-    let result = await provider.complete(messages, AI_TOOLS);
+    // A single traveller turn can need more than one tool: check for an
+    // existing trip, then create one, then add a place to it. Looping here
+    // (bounded, so a confused model cannot spin forever) lets the model
+    // chain those calls instead of narrating an action it never took.
+    const conversation = [...messages];
+    let result = await provider.complete(conversation, AI_TOOLS);
+    let toolRounds = 0;
+    const MAX_TOOL_ROUNDS = 4;
 
-    if (result.toolCalls.length > 0) {
-      const toolMessages: AiMessage[] = [];
+    while (result.toolCalls.length > 0 && toolRounds < MAX_TOOL_ROUNDS) {
+      toolRounds++;
+      conversation.push({ role: "assistant", content: result.content ?? "", toolCalls: result.toolCalls });
       for (const call of result.toolCalls) {
         // Ownership comes from the session, never from the model: a tool call
         // cannot reach another traveller's trip even if it asks to.
         const output = await executeTool(call.name, call.arguments, { owner, tripId });
-        toolMessages.push({ role: "tool", content: JSON.stringify(output), toolCallId: call.id, name: call.name });
+        conversation.push({ role: "tool", content: JSON.stringify(output), toolCallId: call.id, name: call.name });
       }
-      result = await provider.complete(
-        [...messages, { role: "assistant", content: result.content ?? "", toolCalls: result.toolCalls }, ...toolMessages],
-        AI_TOOLS,
-      );
+      result = await provider.complete(conversation, AI_TOOLS);
     }
 
     const content = result.content?.trim() || "I couldn't find a useful answer right now — could you rephrase that?";
