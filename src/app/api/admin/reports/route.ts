@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { reports } from "@/db/schema";
-import { requireUser } from "@/lib/auth/session";
-import { isUnauthenticatedError, jsonError } from "@/lib/api-utils";
+import { requireAdmin } from "@/lib/auth/session";
+import { isAdminRequiredError, isUnauthenticatedError, jsonError } from "@/lib/api-utils";
 
 export async function GET(request: Request) {
   try {
-    const user = await requireUser();
-    if (user.role !== "admin") return jsonError("Administrator access is required.", 403);
+    await requireAdmin();
 
     const url = new URL(request.url);
     const statusParam = url.searchParams.get("status");
@@ -26,6 +25,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ reports: rows });
   } catch (error) {
     if (isUnauthenticatedError(error)) return jsonError("Please log in to continue.", 401);
+    if (isAdminRequiredError(error)) return jsonError("Administrator access is required.", 403);
     throw error;
   }
 }

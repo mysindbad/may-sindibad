@@ -52,9 +52,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
     { href: "/settings", label: dict.profile.accountSettings, icon: "⚙️", gradient: "from-slate-600 to-slate-400" },
   ];
 
-  // Moderation is the one area with no other entry point in the product.
+  // The dashboard is the one area with no other entry point in the product.
   if (user.role === "admin") {
-    accountLinks.push({ href: "/admin", label: dict.admin.title, icon: "🛡️", gradient: "from-violet-700 to-fuchsia-500" });
+    accountLinks.push({ href: "/backoffice", label: dict.backoffice.brand, icon: "🛡️", gradient: "from-violet-700 to-fuchsia-500" });
   }
 
   return (

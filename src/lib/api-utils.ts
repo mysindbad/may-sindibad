@@ -13,6 +13,10 @@ export function isUnauthenticatedError(error: unknown): boolean {
   return error instanceof Error && error.name === "UnauthenticatedError";
 }
 
+export function isAdminRequiredError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AdminRequiredError";
+}
+
 export async function requestIp(request: Request): Promise<string | null> {
   const forwarded = request.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() ?? null;

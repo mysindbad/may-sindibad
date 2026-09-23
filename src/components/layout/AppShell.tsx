@@ -15,11 +15,22 @@ import Link from "next/link";
 // screen that's supposed to feel clean and deliberate.
 const AUTH_PATH_PATTERN = /^\/[a-z]{2}\/(login|signup)(\/|$)/;
 
+// The dashboard is a separate operator tool, not another screen of the
+// traveller-facing app - the consumer bottom nav (home/explore/trips/
+// community/profile) would be meaningless there, so it renders its own
+// complete shell (src/components/backoffice/AdminShell.tsx) instead.
+const BACKOFFICE_PATH_PATTERN = /^\/[a-z]{2}\/backoffice(\/|$)/;
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { locale, dict } = useLocale();
   const { user } = useAuth();
   const pathname = usePathname();
   const isAuthPage = AUTH_PATH_PATTERN.test(pathname);
+  const isBackoffice = BACKOFFICE_PATH_PATTERN.test(pathname);
+
+  if (isBackoffice) {
+    return <>{children}</>;
+  }
 
   if (isAuthPage) {
     return (

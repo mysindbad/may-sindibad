@@ -102,6 +102,24 @@ export async function requireUser(): Promise<PublicUser> {
   return user;
 }
 
+/** Thrown by requireAdmin() when the signed-in user is not an administrator -
+ * distinct from UnauthenticatedError so callers (and their catch blocks) can
+ * tell "not logged in" (401) apart from "logged in, wrong role" (403). */
+export class AdminRequiredError extends Error {
+  constructor() {
+    super("ADMIN_REQUIRED");
+    this.name = "AdminRequiredError";
+  }
+}
+
+/** The one place the "is this an admin?" check is made, instead of every
+ * route re-deriving it from requireUser() + a hand-rolled role comparison. */
+export async function requireAdmin(): Promise<PublicUser> {
+  const user = await requireUser();
+  if (user.role !== "admin") throw new AdminRequiredError();
+  return user;
+}
+
 /** Require a recently-established session before irreversible account actions. */
 export async function requireFreshUser(maxAgeMs = 15 * 60 * 1000): Promise<PublicUser> {
   if (!Number.isSafeInteger(maxAgeMs) || maxAgeMs <= 0) throw new Error("Fresh-session max age must be a positive safe integer.");
