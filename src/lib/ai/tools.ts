@@ -208,7 +208,10 @@ export async function executeTool(
     const budgetCurrency = currencyInput.ok && currencyInput.value && /^[A-Za-z]{3}$/.test(currencyInput.value) ? currencyInput.value.toUpperCase() : "USD";
 
     const result = await createTrip({
-      title: titleInput.value || `${cityInput.value} trip`,
+      // A trip named after its destination city alone reads naturally in any
+      // language, unlike a hardcoded English "<city> trip" template - this
+      // fallback only fires when the model left the title blank outright.
+      title: titleInput.value || cityInput.value,
       destinationCity: cityInput.value,
       destinationCountry: countryInput.value,
       startDate,
@@ -332,7 +335,11 @@ export async function executeTool(
           .filter((item) => item.tripDayId === day.id)
           .map((item) => ({
             itemId: item.id,
-            title: item.title,
+            // A slot with no matched place stores a fixed English sentence as
+            // a DB fallback only - never hand that to the model, which must
+            // describe an open slot itself, in whatever language it is
+            // asked to respond in, using the category alone.
+            title: item.placeId ? item.title : null,
             category: item.category,
             startTime: item.startTime,
             // A missing estimate stays missing: the model must not present an

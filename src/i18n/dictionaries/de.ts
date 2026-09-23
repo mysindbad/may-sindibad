@@ -133,6 +133,8 @@ const de = {
     statusActive: "Aktiv",
     statusCompleted: "Abgeschlossen",
     statusCancelled: "Storniert",
+    skipActivity: "Überspringen",
+    freeTimeExplore: "Freizeit — entdecke",
     deleteConfirm: "Diese Reise löschen? Das kann nicht rückgängig gemacht werden.",
     cityPlaceholder: "Stadt",
     countryPlaceholder: "Land",
@@ -353,6 +355,7 @@ const de = {
     headingNW: "Nordwesten",
   },
   categories: {
+    breakfast: "Frühstück",
     attraction: "Sehenswürdigkeit",
     beach: "Strand",
     restaurant: "Restaurant",

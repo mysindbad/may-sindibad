@@ -133,6 +133,8 @@ const ru = {
     statusActive: "Активна",
     statusCompleted: "Завершена",
     statusCancelled: "Отменена",
+    skipActivity: "Пропустить",
+    freeTimeExplore: "Свободное время — исследуйте",
     deleteConfirm: "Удалить эту поездку? Это действие необратимо.",
     cityPlaceholder: "Город",
     countryPlaceholder: "Страна",
@@ -353,6 +355,7 @@ const ru = {
     headingNW: "северо-запад",
   },
   categories: {
+    breakfast: "Завтрак",
     attraction: "Достопримечательность",
     beach: "Пляж",
     restaurant: "Ресторан",

@@ -133,6 +133,8 @@ const fr = {
     statusActive: "En cours",
     statusCompleted: "Terminé",
     statusCancelled: "Annulé",
+    skipActivity: "Ignorer",
+    freeTimeExplore: "Temps libre — découvrez",
     deleteConfirm: "Supprimer ce voyage ? Cette action est irréversible.",
     cityPlaceholder: "Ville",
     countryPlaceholder: "Pays",
@@ -353,6 +355,7 @@ const fr = {
     headingNW: "nord-ouest",
   },
   categories: {
+    breakfast: "Petit-déjeuner",
     attraction: "Site touristique",
     beach: "Plage",
     restaurant: "Restaurant",

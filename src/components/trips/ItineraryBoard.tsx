@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { Button, Input } from "@/components/ui/primitives";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { Button, Card, Input } from "@/components/ui/primitives";
 import { InlineAlert, ConfirmButton } from "@/components/ui/feedback";
 import { formatCurrency } from "@/lib/utils";
 
@@ -11,11 +12,22 @@ interface ItineraryItem {
   id: string;
   title: string;
   category: string;
+  placeId: string | null;
   startTime: string | null;
   estimatedCost: string | null;
   currency: string;
   status: string;
   notes: string | null;
+}
+
+/** The heuristic planner fills an unmatched slot with a placeId-less item -
+ * its stored title is a fixed English sentence meant only as a DB fallback,
+ * never something to show a traveller in their own language. Rebuild the
+ * label from the (locale-independent) category instead of trusting it. */
+function itemDisplayTitle(item: ItineraryItem, dict: Dictionary): string {
+  if (item.placeId) return item.title;
+  const category = dict.categories[item.category as keyof Dictionary["categories"]] ?? item.category;
+  return `${dict.trips.freeTimeExplore} ${category}`;
 }
 
 interface TripDay {
@@ -105,35 +117,37 @@ export function ItineraryBoard({ trip, days: initialDays, aiNotice }: { trip: Tr
             </h2>
             <ul className="space-y-2">
               {day.items.map((item) => (
-                <li key={item.id} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-[var(--shadow-card)]">
-                  <div>
-                    <p className={`text-sm font-medium ${item.status === "skipped" ? "text-slate-400 line-through" : "text-brand-950 dark:text-sand-50"}`}>
-                      {item.startTime ? `${item.startTime} · ` : ""}
-                      {item.title}
-                    </p>
-                    {item.estimatedCost && Number(item.estimatedCost) > 0 && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(item.estimatedCost, item.currency, locale)}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    {item.status !== "skipped" ? (
-                      <button
-                        type="button"
-                        onClick={() => updateItemStatus(item.id, "skipped")}
-                        className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-slate-100"
-                      >
-                        {dict.trips.statusCancelled}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => updateItemStatus(item.id, "suggested")}
-                        className="rounded-lg px-2 py-1 text-xs text-sky-600 hover:bg-sky-50"
-                      >
-                        {dict.common.retry}
-                      </button>
-                    )}
-                  </div>
+                <li key={item.id}>
+                  <Card className="flex items-center justify-between p-3">
+                    <div>
+                      <p className={`text-sm font-medium ${item.status === "skipped" ? "text-slate-400 line-through" : "text-brand-950 dark:text-sand-50"}`}>
+                        {item.startTime ? `${item.startTime} · ` : ""}
+                        {itemDisplayTitle(item, dict)}
+                      </p>
+                      {item.estimatedCost && Number(item.estimatedCost) > 0 && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(item.estimatedCost, item.currency, locale)}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      {item.status !== "skipped" ? (
+                        <button
+                          type="button"
+                          onClick={() => updateItemStatus(item.id, "skipped")}
+                          className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                        >
+                          {dict.trips.skipActivity}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => updateItemStatus(item.id, "suggested")}
+                          className="rounded-lg px-2 py-1 text-xs text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-500/10"
+                        >
+                          {dict.common.retry}
+                        </button>
+                      )}
+                    </div>
+                  </Card>
                 </li>
               ))}
               {day.items.length === 0 && <p className="text-xs text-slate-400">{dict.trips.noActivities}</p>}
@@ -142,7 +156,7 @@ export function ItineraryBoard({ trip, days: initialDays, aiNotice }: { trip: Tr
         ))}
       </div>
 
-      <form onSubmit={handleAdjust} className="rounded-2xl border border-slate-200 bg-white p-4">
+      <form onSubmit={handleAdjust} className="rounded-2xl border border-brand-900/5 bg-white p-4 dark:border-white/10 dark:bg-brand-900">
         <p className="mb-2 text-sm font-medium text-brand-950 dark:text-sand-50">{dict.trips.askToModify}</p>
         <div className="flex gap-2">
           <Input value={adjustMessage} onChange={(e) => setAdjustMessage(e.target.value)} placeholder={dict.trips.modifyPlaceholder} aria-label={dict.trips.modifyPlaceholder} />

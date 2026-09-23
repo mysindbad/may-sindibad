@@ -133,6 +133,8 @@ const ar = {
     statusActive: "جارية",
     statusCompleted: "منتهية",
     statusCancelled: "ملغاة",
+    skipActivity: "تخطي",
+    freeTimeExplore: "وقت حر — استكشف",
     deleteConfirm: "هل تريد حذف هذه الرحلة؟ لا يمكن التراجع عن هذا الإجراء.",
     cityPlaceholder: "المدينة",
     countryPlaceholder: "الدولة",
@@ -352,6 +354,7 @@ const ar = {
     headingNW: "الشمال الغربي",
   },
   categories: {
+    breakfast: "الفطور",
     attraction: "معلم سياحي",
     beach: "شاطئ",
     restaurant: "مطعم",

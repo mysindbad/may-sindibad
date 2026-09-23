@@ -49,6 +49,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
               id: item.id,
               title: item.title,
               category: item.category,
+              placeId: item.placeId,
               startTime: item.startTime,
               estimatedCost: item.estimatedCost,
               currency: item.currency,

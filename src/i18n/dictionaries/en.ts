@@ -131,6 +131,8 @@ const en = {
     statusActive: "Active",
     statusCompleted: "Completed",
     statusCancelled: "Cancelled",
+    skipActivity: "Skip",
+    freeTimeExplore: "Free time — explore",
     deleteConfirm: "Delete this trip? This cannot be undone.",
     cityPlaceholder: "City",
     countryPlaceholder: "Country",
@@ -350,6 +352,7 @@ const en = {
     headingNW: "north-west",
   },
   categories: {
+    breakfast: "Breakfast",
     attraction: "Attraction",
     beach: "Beach",
     restaurant: "Restaurant",

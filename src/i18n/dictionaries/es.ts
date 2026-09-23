@@ -133,6 +133,8 @@ const es = {
     statusActive: "En curso",
     statusCompleted: "Completado",
     statusCancelled: "Cancelado",
+    skipActivity: "Omitir",
+    freeTimeExplore: "Tiempo libre — explora",
     deleteConfirm: "¿Eliminar este viaje? No se puede deshacer.",
     cityPlaceholder: "Ciudad",
     countryPlaceholder: "País",
@@ -353,6 +355,7 @@ const es = {
     headingNW: "noroeste",
   },
   categories: {
+    breakfast: "Desayuno",
     attraction: "Atracción",
     beach: "Playa",
     restaurant: "Restaurante",
