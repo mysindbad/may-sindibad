@@ -461,6 +461,13 @@ const fr = {
     attachTrip: "Partager un de vos voyages (facultatif)",
     noTripOption: "Aucun voyage",
     sharedTrip: "Voyage partagé",
+    shareAction: "Partager",
+    shareToStory: "Partager en story",
+    linkCopied: "Lien copié",
+    sharedAsStory: "Partagé en story",
+    commentPlaceholder: "Écrire un commentaire…",
+    noComments: "Aucun commentaire pour l'instant.",
+    deleteCommentConfirm: "Supprimer ce commentaire ?",
   },
   stories: {
     yourStory: "Votre story",

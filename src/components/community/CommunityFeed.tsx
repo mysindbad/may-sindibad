@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Badge, Button, Card, Select, Textarea } from "@/components/ui/primitives";
+import { Button, Card, Select, Textarea } from "@/components/ui/primitives";
 import { EmptyState, InlineAlert, Skeleton } from "@/components/ui/feedback";
-import { AddToTripButton } from "@/components/trips/AddToTripButton";
+import { PostCard, type FeedPost } from "./PostCard";
 
 // The community exists to serve trips, so every post that names a place
 // carries the same add-to-trip action used in Explore and on the map. What a
@@ -13,23 +13,6 @@ import { AddToTripButton } from "@/components/trips/AddToTripButton";
 // A post can also showcase one of the traveller's own trips (destination and
 // dates only, never the itinerary itself, which stays private) and a photo,
 // so this feels like a real travel feed rather than a text-only guestbook.
-
-interface FeedPost {
-  id: string;
-  kind: string;
-  title: string | null;
-  body: string;
-  city: string | null;
-  country: string | null;
-  createdAt: string;
-  authorName: string;
-  isMine: boolean;
-  imageUrl: string | null;
-  likeCount: number;
-  likedByMe: boolean;
-  place: { id: string; name: string; city: string; country: string } | null;
-  trip: { title: string; destinationCity: string; destinationCountry: string; startDate: string; endDate: string } | null;
-}
 
 interface MyTrip {
   id: string;
@@ -412,73 +395,7 @@ export function CommunityFeed() {
         <ul className="space-y-3">
           {posts.map((post) => (
             <li key={post.id}>
-              <Card className="space-y-2 overflow-hidden p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-brand-950 dark:text-sand-50">{post.authorName}</p>
-                    {post.city && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {post.city}
-                        {post.country ? ", " + post.country : ""}
-                      </p>
-                    )}
-                  </div>
-                  <Badge tone="sky">
-                    {post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : dict.communityFeed.kindMoment}
-                  </Badge>
-                </div>
-
-                {post.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
-                  <img src={post.imageUrl} alt="" className="-mx-4 h-48 w-[calc(100%+2rem)] object-cover" />
-                )}
-
-                <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{post.body}</p>
-
-                {post.trip && (
-                  <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-sky-500/5 px-3 py-2 text-xs font-medium text-brand-800">
-                    <span aria-hidden="true">🧳</span>
-                    {dict.communityFeed.sharedTrip}: {post.trip.title} — {post.trip.destinationCity}, {post.trip.destinationCountry} ·{" "}
-                    {post.trip.startDate} → {post.trip.endDate}
-                  </div>
-                )}
-
-                {post.place && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-xs font-medium text-brand-800">📍 {post.place.name}</span>
-                    <AddToTripButton placeId={post.place.id} />
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1 border-t border-slate-100 pt-2 dark:border-white/5">
-                  <button
-                    type="button"
-                    disabled={!user}
-                    onClick={() => void toggleLike(post)}
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors ${
-                      post.likedByMe
-                        ? "text-rose-600 dark:text-rose-400"
-                        : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
-                    } ${!user ? "cursor-default" : "cursor-pointer"}`}
-                  >
-                    <span aria-hidden="true">{post.likedByMe ? "❤️" : "🤍"}</span>
-                    {post.likeCount > 0 && <span>{post.likeCount}</span>}
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {post.isMine && (
-                    <Button size="sm" variant="ghost" onClick={() => void removePost(post.id)}>
-                      {dict.common.delete}
-                    </Button>
-                  )}
-                  {!post.isMine && user && (
-                    <Button size="sm" variant="ghost" disabled={reported[post.id]} onClick={() => void report(post.id)}>
-                      {reported[post.id] ? dict.community.reportSent : dict.community.report}
-                    </Button>
-                  )}
-                </div>
-              </Card>
+              <PostCard post={post} onLike={(p) => void toggleLike(p)} onDelete={(id) => void removePost(id)} onReport={(id) => void report(id)} reported={!!reported[post.id]} />
             </li>
           ))}
         </ul>

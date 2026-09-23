@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
@@ -56,10 +55,8 @@ const RING_IDLE = "ring-slate-200 dark:ring-white/15";
 const AVATAR_RING = "h-16 w-16 rounded-full object-cover ring-2 ring-offset-2 ring-offset-sand-50 dark:ring-offset-brand-950";
 
 export function StoryTray() {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const { user } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [groups, setGroups] = useState<StoryGroup[] | null>(null);
   const [seenIds, setSeenIds] = useState<Set<string>>(() => (typeof window === "undefined" ? new Set() : readSeenIds()));
   const [activeViewer, setActiveViewer] = useState<ActiveViewer | null>(null);
@@ -114,21 +111,6 @@ export function StoryTray() {
     const startIndex = orderedGroups.indexOf(group);
     setActiveViewer({ groups: orderedGroups, startIndex });
   }
-
-  // The home page's "story" chip links here with ?story=open so tapping it
-  // actually opens a story instead of dropping the traveller on the regular
-  // feed, where story posts never appear. Runs once groups have loaded, then
-  // cleans the param so a later refresh of /community doesn't reopen it.
-  const handledStoryParam = useRef(false);
-  useEffect(() => {
-    if (handledStoryParam.current || groups === null || !user) return;
-    if (searchParams.get("story") !== "open") return;
-    handledStoryParam.current = true;
-    if (myGroup) openViewer(myGroup);
-    else setComposerOpen(true);
-    router.replace("/" + locale + "/community", { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, user, myGroup, searchParams]);
 
   function handlePosted() {
     setComposerOpen(false);

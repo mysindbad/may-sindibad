@@ -460,6 +460,13 @@ const ar = {
     attachTrip: "شارك إحدى رحلاتك (اختياري)",
     noTripOption: "بدون رحلة",
     sharedTrip: "رحلة مُشارَكة",
+    shareAction: "مشاركة",
+    shareToStory: "مشاركة كقصة",
+    linkCopied: "تم نسخ الرابط",
+    sharedAsStory: "تمت المشاركة كقصة",
+    commentPlaceholder: "اكتب تعليقًا…",
+    noComments: "لا توجد تعليقات بعد.",
+    deleteCommentConfirm: "هل تريد حذف هذا التعليق؟",
   },
   stories: {
     yourStory: "قصتك",

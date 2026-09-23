@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { communityPostLikes, communityPosts, media, places, trips, users } from "@/db/schema";
+import { communityPostComments, communityPostLikes, communityPosts, media, places, trips, users } from "@/db/schema";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { isUnauthenticatedError, jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
@@ -44,6 +44,7 @@ export async function GET() {
       createdAt: communityPosts.createdAt,
       authorId: communityPosts.userId,
       authorName: users.name,
+      authorAvatarUrl: users.avatarUrl,
       placeName: places.name,
       placeCity: places.city,
       placeCountry: places.country,
@@ -95,6 +96,19 @@ export async function GET() {
     }
   }
 
+  // Comment counts only - the comment list itself loads lazily per post when
+  // a traveller actually opens it, the same lazy pattern the story tray uses.
+  const commentCountByPost = new Map<string, number>();
+  if (postIds.length > 0) {
+    const commentRows = await db
+      .select({ postId: communityPostComments.postId })
+      .from(communityPostComments)
+      .where(inArray(communityPostComments.postId, postIds));
+    for (const row of commentRows) {
+      commentCountByPost.set(row.postId, (commentCountByPost.get(row.postId) ?? 0) + 1);
+    }
+  }
+
   return NextResponse.json({
     posts: rows.map((row) => ({
       id: row.id,
@@ -105,10 +119,12 @@ export async function GET() {
       country: row.country,
       createdAt: row.createdAt,
       authorName: row.authorName,
+      authorAvatarUrl: row.authorAvatarUrl,
       isMine: viewer ? viewer.id === row.authorId : false,
       imageUrl: imagesByPost.get(row.id) ?? null,
       likeCount: likeCountByPost.get(row.id) ?? 0,
       likedByMe: likedByMe.has(row.id),
+      commentCount: commentCountByPost.get(row.id) ?? 0,
       // A place is only offered onward if it is still publicly approved, so a
       // post cannot become a back door to a withdrawn place.
       place:

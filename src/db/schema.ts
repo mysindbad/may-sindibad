@@ -598,6 +598,24 @@ export const communityPostLikes = pgTable(
   ],
 );
 
+/** A comment on a post - flat, not threaded, matching the community feed's
+ * own scope (short-form travel chatter, not a discussion forum). */
+export const communityPostComments = pgTable(
+  "community_post_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: varchar("body", { length: 1000 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("community_post_comments_post_idx").on(t.postId)],
+);
+
 // ---------------------------------------------------------------------------
 // Sindbad's long-term memory of the traveller
 //

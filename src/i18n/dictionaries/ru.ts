@@ -461,6 +461,13 @@ const ru = {
     attachTrip: "Поделиться одной из ваших поездок (необязательно)",
     noTripOption: "Без поездки",
     sharedTrip: "Общая поездка",
+    shareAction: "Поделиться",
+    shareToStory: "Поделиться как история",
+    linkCopied: "Ссылка скопирована",
+    sharedAsStory: "Опубликовано как история",
+    commentPlaceholder: "Написать комментарий…",
+    noComments: "Пока нет комментариев.",
+    deleteCommentConfirm: "Удалить этот комментарий?",
   },
   stories: {
     yourStory: "Ваша история",

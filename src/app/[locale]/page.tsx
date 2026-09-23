@@ -15,10 +15,10 @@ import { PlaceCard } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 import { NearbyDiscovery } from "@/components/home/NearbyDiscovery";
 import { LocationPrompt } from "@/components/home/LocationPrompt";
+import { StoryTray } from "@/components/community/StoryTray";
 import { Card } from "@/components/ui/primitives";
 
 const COMMUNITY_CHIPS = [
-  { kind: "story", icon: "📖", gradient: "from-violet-500 to-purple-400", labelKey: "kindStory", captionKey: "captionStory" },
   { kind: "place", icon: "📍", gradient: "from-emerald-500 to-teal-400", labelKey: "kindPlace", captionKey: "captionPlace" },
   { kind: "tip", icon: "💡", gradient: "from-rose-500 to-pink-400", labelKey: "kindTip", captionKey: "captionTip" },
   { kind: "moment", icon: "📷", gradient: "from-amber-500 to-orange-400", labelKey: "kindMoment", captionKey: "captionMoment" },
@@ -90,14 +90,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </form>
       </section>
 
-      <Link href={`/${locale}/ai`} className="block">
-        <div className="relative flex items-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500/10 via-turquoise-500/10 to-transparent p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)] dark:from-sky-500/15 dark:via-turquoise-500/10">
-          <div className="min-w-0 flex-1">
-            <p className="text-base font-bold text-brand-950 dark:text-sand-50">✨ {dict.home.askSindbad}</p>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.home.askSindbadHint}</p>
-          </div>
-          <Image src="/brand/genie.png" alt="" width={96} height={96} className="animate-genie-float shrink-0" />
-        </div>
+      <Link href={`/${locale}/ai`} className="flex items-center gap-2 self-start rounded-full bg-gradient-to-br from-sky-500/10 via-turquoise-500/10 to-transparent py-2 ps-2.5 pe-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)] dark:from-sky-500/15 dark:via-turquoise-500/10">
+        <Image src="/brand/genie.png" alt="" width={28} height={28} className="animate-genie-float shrink-0" />
+        <span className="text-sm font-semibold text-brand-950 dark:text-sand-50">{dict.home.askSindbad}</span>
       </Link>
 
       {activeTrip && (
@@ -131,13 +126,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             {dict.common.seeAll}
           </Link>
         </div>
-        <div className="mb-3 grid grid-cols-4 gap-2">
+        <div className="mb-4">
+          <StoryTray />
+        </div>
+        <div className="mb-3 grid grid-cols-3 gap-2">
           {COMMUNITY_CHIPS.map((chip) => (
-            <Link
-              key={chip.kind}
-              href={chip.kind === "story" ? `/${locale}/community?story=open` : `/${locale}/community`}
-              className="flex flex-col items-center gap-1.5 text-center"
-            >
+            <Link key={chip.kind} href={`/${locale}/community`} className="flex flex-col items-center gap-1.5 text-center">
               <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${chip.gradient} text-xl text-white shadow-sm`}>
                 {chip.icon}
               </span>
