@@ -20,15 +20,39 @@ const ROUTE_SOURCE = "sindbad-route";
 const ROUTE_LAYER = "sindbad-route-line";
 const ROUTE_CASING_LAYER = "sindbad-route-casing";
 
-function buildDot(color: string, size: number, pulse: boolean): HTMLDivElement {
+/** A proper map pin, not a plain dot - the anchor is the tip, matching where
+ * MapLibre positions it, so it points exactly at the destination instead of
+ * hovering its centre over it. The bounce-in lives on an inner element so it
+ * never fights the outer transform MapLibre uses to place the marker. */
+function buildDestinationPin(): HTMLDivElement {
+  const outer = document.createElement("div");
+  outer.style.width = "34px";
+  outer.style.height = "44px";
+
+  const inner = document.createElement("div");
+  inner.style.width = "100%";
+  inner.style.height = "100%";
+  inner.style.filter = "drop-shadow(0 3px 6px rgba(7,28,51,0.45))";
+  inner.style.animation = "sindbad-pin-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)";
+  inner.innerHTML =
+    '<svg width="34" height="44" viewBox="0 0 34 44" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M17 0C7.611 0 0 7.611 0 17c0 12.75 17 27 17 27s17-14.25 17-27C34 7.611 26.389 0 17 0z" fill="#e4572e"/>' +
+    '<circle cx="17" cy="17" r="7.5" fill="white"/>' +
+    '<circle cx="17" cy="17" r="3.5" fill="#e4572e"/>' +
+    "</svg>";
+  outer.appendChild(inner);
+  return outer;
+}
+
+function buildPositionDot(): HTMLDivElement {
   const el = document.createElement("div");
-  el.style.width = size + "px";
-  el.style.height = size + "px";
+  el.style.width = "18px";
+  el.style.height = "18px";
   el.style.borderRadius = "9999px";
-  el.style.background = color;
+  el.style.background = "#1c7ed6";
   el.style.border = "3px solid white";
   el.style.boxShadow = "0 2px 10px rgba(7,28,51,0.45)";
-  if (pulse) el.style.animation = "sindbad-pulse 2s ease-out infinite";
+  el.style.animation = "sindbad-pulse 2s ease-out infinite";
   return el;
 }
 
@@ -73,32 +97,10 @@ export function RouteMapView({
     // alone, instead of needing a phone screenshot to spot a placeholder tile.
     map.on("error", (event) => console.error("MapLibre error", event.error));
 
-    new MapLibreMarker({ element: buildDot("#e4572e", 20, false) })
-      .setLngLat([destination.lng, destination.lat])
-      .addTo(map);
+    new MapLibreMarker({ element: buildDestinationPin(), anchor: "bottom" }).setLngLat([destination.lng, destination.lat]).addTo(map);
 
     map.on("load", () => {
       readyRef.current = true;
-      map.addSource(ROUTE_SOURCE, {
-        type: "geojson",
-        data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
-      });
-      // Two stacked lines: a wide dark casing under a bright core keeps the
-      // path readable over both pale streets and dark satellite tiles.
-      map.addLayer({
-        id: ROUTE_CASING_LAYER,
-        type: "line",
-        source: ROUTE_SOURCE,
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#0b3552", "line-width": 9, "line-opacity": 0.55 },
-      });
-      map.addLayer({
-        id: ROUTE_LAYER,
-        type: "line",
-        source: ROUTE_SOURCE,
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#22b8cf", "line-width": 5 },
-      });
     });
 
     return () => {
@@ -110,20 +112,44 @@ export function RouteMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Push the latest geometry into the map, once the style has finished loading.
+  // Push the latest geometry into the map, once the style has finished
+  // loading. The source and its layers are created here, lazily, on the
+  // first real geometry - not up front with an empty LineString, which
+  // MapLibre's vector-tile indexing can get stuck on and never recover a
+  // route line from even once real coordinates arrive later.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || geometry.length < 2) return;
 
     function apply() {
       const current = mapRef.current;
       if (!current || !readyRef.current) return;
-      const source = current.getSource(ROUTE_SOURCE);
-      if (!source || typeof (source as { setData?: unknown }).setData !== "function") return;
-      (source as unknown as { setData: (data: unknown) => void }).setData({
-        type: "Feature",
+      const data = {
+        type: "Feature" as const,
         properties: {},
-        geometry: { type: "LineString", coordinates: geometry },
+        geometry: { type: "LineString" as const, coordinates: geometry },
+      };
+      const existing = current.getSource(ROUTE_SOURCE);
+      if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
+        (existing as unknown as { setData: (data: unknown) => void }).setData(data);
+        return;
+      }
+      current.addSource(ROUTE_SOURCE, { type: "geojson", data });
+      // Two stacked lines: a wide dark casing under a bright core keeps the
+      // path readable over both pale streets and dark satellite tiles.
+      current.addLayer({
+        id: ROUTE_CASING_LAYER,
+        type: "line",
+        source: ROUTE_SOURCE,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#0b3552", "line-width": 9, "line-opacity": 0.55 },
+      });
+      current.addLayer({
+        id: ROUTE_LAYER,
+        type: "line",
+        source: ROUTE_SOURCE,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#22b8cf", "line-width": 5 },
       });
     }
 
@@ -140,9 +166,7 @@ export function RouteMapView({
     if (!map || !position) return;
 
     if (!userMarkerRef.current) {
-      userMarkerRef.current = new MapLibreMarker({ element: buildDot("#1c7ed6", 18, true) })
-        .setLngLat([position.lng, position.lat])
-        .addTo(map);
+      userMarkerRef.current = new MapLibreMarker({ element: buildPositionDot() }).setLngLat([position.lng, position.lat]).addTo(map);
     } else {
       userMarkerRef.current.setLngLat([position.lng, position.lat]);
     }

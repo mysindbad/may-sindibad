@@ -109,3 +109,19 @@ body {
     box-shadow: 0 0 0 0 rgba(28, 126, 214, 0);
   }
 }
+
+/* Destination pin dropping into place on the navigation map. */
+@keyframes sindbad-pin-drop {
+  0% {
+    transform: translateY(-18px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(2px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
