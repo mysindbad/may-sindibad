@@ -1,21 +1,27 @@
 import "server-only";
 import type { AiCompletionResult, AiMessage, AiProvider, AiToolCall, AiToolDefinition } from "./provider";
 import { parseJsonResponseWithLimit, readResponseBodyWithLimit } from "@/lib/http/bounded-body";
+import { FallbackAiProvider } from "./fallback";
 
 const MAX_AI_RESPONSE_BYTES = 2 * 1024 * 1024;
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 // OpenAI-compatible chat completions adapter. Works with OpenAI itself and
 // any endpoint that implements the same tool-calling message contract.
 export class OpenAiCompatibleProvider implements AiProvider {
-  readonly name = "openai-compatible";
+  readonly name: string;
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly timeoutMs: number;
 
-  constructor(apiKey: string, baseUrl = "https://api.openai.com/v1", model = "gpt-4o-mini") {
+  constructor(apiKey: string, baseUrl = "https://api.openai.com/v1", model = "gpt-4o-mini", timeoutMs = DEFAULT_TIMEOUT_MS) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.model = model;
+    this.timeoutMs = timeoutMs;
+    this.name = `openai-compatible(${model})`;
   }
 
   async complete(messages: AiMessage[], tools?: AiToolDefinition[]): Promise<AiCompletionResult> {
@@ -40,7 +46,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(this.timeoutMs),
     });
 
     if (!response.ok) {
@@ -105,8 +111,23 @@ function toOpenAiMessage(message: AiMessage): Record<string, unknown> {
   return { role: message.role, content: message.content, ...(message.name ? { name: message.name } : {}) };
 }
 
+const FREE_MODEL_TIMEOUT_MS = 8_000;
+
+/**
+ * AI_FREE_MODEL is optional: a cheaper or free-tier model id on the same
+ * gateway/key (e.g. an OpenRouter ":free" model) to try first, on a short
+ * timeout, before the primary AI_MODEL. Left unset, only AI_MODEL is used,
+ * exactly as before.
+ */
 export function createOpenAiProviderFromEnv(): AiProvider | null {
   const apiKey = process.env.AI_API_KEY;
   if (!apiKey) return null;
-  return new OpenAiCompatibleProvider(apiKey, process.env.AI_API_BASE_URL, process.env.AI_MODEL);
+  const baseUrl = process.env.AI_API_BASE_URL;
+  const primary = new OpenAiCompatibleProvider(apiKey, baseUrl, process.env.AI_MODEL);
+
+  const freeModel = process.env.AI_FREE_MODEL?.trim();
+  if (!freeModel) return primary;
+
+  const free = new OpenAiCompatibleProvider(apiKey, baseUrl, freeModel, FREE_MODEL_TIMEOUT_MS);
+  return new FallbackAiProvider(free, primary);
 }
