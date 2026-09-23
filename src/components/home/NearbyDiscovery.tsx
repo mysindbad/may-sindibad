@@ -72,14 +72,14 @@ export function NearbyDiscovery() {
 
   if (status === "idle" || status === "denied" || status === "error") {
     return (
-      <div className="rounded-2xl bg-gradient-to-br from-sky-500/10 to-turquoise-500/10 p-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm dark:bg-brand-900">
-          <span aria-hidden="true">📍</span>
-        </div>
-        <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
+      <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-sky-500/10 to-turquoise-500/10 px-4 py-3">
+        <span className="shrink-0 text-xl" aria-hidden="true">
+          📍
+        </span>
+        <p className="flex-1 text-sm text-slate-600 dark:text-slate-400">
           {status === "denied" ? dict.errors.forbidden : status === "error" ? dict.common.somethingWentWrong : dict.home.emptyNearby}
         </p>
-        <Button variant="primary" size="sm" onClick={handleEnableLocation}>
+        <Button variant="primary" size="sm" className="shrink-0" onClick={handleEnableLocation}>
           {dict.home.enableLocation}
         </Button>
       </div>
