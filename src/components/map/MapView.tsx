@@ -41,6 +41,7 @@ export function MapView({
       attributionControl: { compact: true },
     });
     mapRef.current.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    mapRef.current.on("error", (event) => console.error("MapLibre error", event.error));
 
     return () => {
       mapRef.current?.remove();
