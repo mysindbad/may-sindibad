@@ -70,7 +70,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           width={176}
           height={176}
           priority
-          className="pointer-events-none absolute -end-4 -top-6 h-32 w-32 drop-shadow-[0_10px_20px_rgba(7,28,51,0.45)] sm:h-44 sm:w-44"
+          className="animate-genie-float pointer-events-none absolute -end-4 -top-6 h-32 w-32 drop-shadow-[0_10px_20px_rgba(7,28,51,0.45)] sm:h-44 sm:w-44"
         />
         <div className="relative max-w-[62%] sm:max-w-md">
           <p className="text-sm font-medium text-sky-200">{greeting}</p>
@@ -96,7 +96,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <p className="text-base font-bold text-brand-950 dark:text-sand-50">✨ {dict.home.askSindbad}</p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.home.askSindbadHint}</p>
           </div>
-          <Image src="/brand/genie.png" alt="" width={96} height={96} className="shrink-0" />
+          <Image src="/brand/genie.png" alt="" width={96} height={96} className="animate-genie-float shrink-0" />
         </div>
       </Link>
 

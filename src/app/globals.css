@@ -125,3 +125,24 @@ body {
     opacity: 1;
   }
 }
+
+/* A gentle, magical bob for the genie illustration on the home hero and the
+   login/signup screen - the difference between a static image and a mascot
+   that feels alive. Kept slow and small so it reads as ambient, not busy. */
+@keyframes sindbad-genie-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+.animate-genie-float {
+  animation: sindbad-genie-float 4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-genie-float {
+    animation: none;
+  }
+}

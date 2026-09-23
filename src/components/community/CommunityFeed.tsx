@@ -38,6 +38,14 @@ interface MyTrip {
   destinationCountry: string;
 }
 
+interface PlaceOption {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  coverImageUrl: string | null;
+}
+
 const KINDS = ["moment", "tip", "place"] as const;
 
 export function CommunityFeed() {
@@ -48,6 +56,10 @@ export function CommunityFeed() {
   const [kind, setKind] = useState<(typeof KINDS)[number]>("moment");
   const [myTrips, setMyTrips] = useState<MyTrip[]>([]);
   const [tripId, setTripId] = useState("");
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeResults, setPlaceResults] = useState<PlaceOption[]>([]);
+  const [placeSearching, setPlaceSearching] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceOption | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,6 +93,46 @@ export function CommunityFeed() {
       .catch(() => {});
   }, [user]);
 
+  // A "place" post exists to point at somewhere real, so picking one has to
+  // search the actual directory - not just leave it as a text label with no
+  // location behind it.
+  useEffect(() => {
+    if (kind !== "place" || selectedPlace || placeQuery.trim().length < 2) {
+      setPlaceResults([]);
+      return;
+    }
+    let cancelled = false;
+    setPlaceSearching(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/places?q=${encodeURIComponent(placeQuery.trim())}&limit=6`)
+        .then((res) => res.json())
+        .then((data: { places?: PlaceOption[] }) => {
+          if (!cancelled) setPlaceResults(data.places ?? []);
+        })
+        .catch(() => {
+          if (!cancelled) setPlaceResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setPlaceSearching(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [kind, placeQuery, selectedPlace]);
+
+  function pickPlace(place: PlaceOption) {
+    setSelectedPlace(place);
+    setPlaceQuery("");
+    setPlaceResults([]);
+  }
+
+  function clearPlace() {
+    setSelectedPlace(null);
+    setPlaceQuery("");
+  }
+
   function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setPhotoFile(file);
@@ -101,7 +153,7 @@ export function CommunityFeed() {
       const res = await fetch("/api/community/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, body, tripId: tripId || undefined }),
+        body: JSON.stringify({ kind, body, tripId: tripId || undefined, placeId: selectedPlace?.id }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -124,6 +176,8 @@ export function CommunityFeed() {
       setBody("");
       setTripId("");
       clearPhoto();
+      clearPlace();
+      setKind("moment");
       setComposerOpen(false);
       await load();
     } catch {
@@ -202,6 +256,71 @@ export function CommunityFeed() {
                   ✕
                 </button>
               </div>
+
+              {kind === "place" &&
+                (selectedPlace ? (
+                  <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2 dark:bg-white/5">
+                    {selectedPlace.coverImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- remote place photos come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                      <img src={selectedPlace.coverImageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-800 text-white">📍</span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-brand-950 dark:text-sand-50">{selectedPlace.name}</p>
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {selectedPlace.city}, {selectedPlace.country}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearPlace}
+                      aria-label={dict.common.cancel}
+                      className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={placeQuery}
+                      onChange={(e) => setPlaceQuery(e.target.value)}
+                      placeholder={dict.explore.searchPlaceholder}
+                      aria-label={dict.explore.searchPlaceholder}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-brand-950 outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-white/15 dark:bg-white/5 dark:text-sand-50"
+                    />
+                    {placeSearching && <p className="mt-1 text-xs text-slate-400">{dict.common.loading}</p>}
+                    {placeResults.length > 0 && (
+                      <ul className="absolute z-10 mt-1 w-full space-y-0.5 rounded-xl border border-slate-200 bg-white p-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
+                        {placeResults.map((place) => (
+                          <li key={place.id}>
+                            <button
+                              type="button"
+                              onClick={() => pickPlace(place)}
+                              className="flex w-full items-center gap-2 rounded-lg p-1.5 text-start hover:bg-slate-50 dark:hover:bg-white/5"
+                            >
+                              {place.coverImageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- remote place photos come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                                <img src={place.coverImageUrl} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" />
+                              ) : (
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-800 text-xs text-white">📍</span>
+                              )}
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm text-brand-950 dark:text-sand-50">{place.name}</span>
+                                <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                                  {place.city}, {place.country}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+
               <Textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
