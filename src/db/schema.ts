@@ -577,6 +577,27 @@ export const communityPosts = pgTable(
   ],
 );
 
+/** A simple like on a post - one row per (post, user) so toggling never
+ * double-counts, enforced at the database level rather than trusted to the
+ * application alone. */
+export const communityPostLikes = pgTable(
+  "community_post_likes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("community_post_likes_unique").on(t.postId, t.userId),
+    index("community_post_likes_post_idx").on(t.postId),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Sindbad's long-term memory of the traveller
 //

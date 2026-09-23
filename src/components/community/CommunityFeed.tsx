@@ -25,6 +25,8 @@ interface FeedPost {
   authorName: string;
   isMine: boolean;
   imageUrl: string | null;
+  likeCount: number;
+  likedByMe: boolean;
   place: { id: string; name: string; city: string; country: string } | null;
   trip: { title: string; destinationCity: string; destinationCountry: string; startDate: string; endDate: string } | null;
 }
@@ -138,6 +140,29 @@ export function CommunityFeed() {
       if (res.ok) await load();
     } catch {
       setError(dict.errors.network);
+    }
+  }
+
+  async function toggleLike(post: FeedPost) {
+    if (!user) return;
+    const nextLiked = !post.likedByMe;
+    // Optimistic: a like should feel instant, and the unique constraint on
+    // the server makes the eventual request idempotent either way.
+    setPosts((prev) =>
+      (prev ?? []).map((p) => (p.id === post.id ? { ...p, likedByMe: nextLiked, likeCount: p.likeCount + (nextLiked ? 1 : -1) } : p)),
+    );
+    try {
+      const res = await fetch(`/api/community/posts/${post.id}/like`, { method: nextLiked ? "POST" : "DELETE" });
+      if (!res.ok) throw new Error("like failed");
+      const data = (await res.json()) as { likeCount?: number; liked?: boolean };
+      setPosts((prev) =>
+        (prev ?? []).map((p) => (p.id === post.id ? { ...p, likeCount: data.likeCount ?? p.likeCount, likedByMe: data.liked ?? p.likedByMe } : p)),
+      );
+    } catch {
+      // Roll back - the count shown must always match what the server has.
+      setPosts((prev) =>
+        (prev ?? []).map((p) => (p.id === post.id ? { ...p, likedByMe: post.likedByMe, likeCount: post.likeCount } : p)),
+      );
     }
   }
 
@@ -305,6 +330,22 @@ export function CommunityFeed() {
                     <AddToTripButton placeId={post.place.id} />
                   </div>
                 )}
+
+                <div className="flex items-center gap-1 border-t border-slate-100 pt-2 dark:border-white/5">
+                  <button
+                    type="button"
+                    disabled={!user}
+                    onClick={() => void toggleLike(post)}
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors ${
+                      post.likedByMe
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
+                    } ${!user ? "cursor-default" : "cursor-pointer"}`}
+                  >
+                    <span aria-hidden="true">{post.likedByMe ? "❤️" : "🤍"}</span>
+                    {post.likeCount > 0 && <span>{post.likeCount}</span>}
+                  </button>
+                </div>
 
                 <div className="flex flex-wrap gap-2 pt-1">
                   {post.isMine && (

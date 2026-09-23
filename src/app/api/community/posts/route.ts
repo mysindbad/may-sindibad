@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { communityPosts, media, places, trips, users } from "@/db/schema";
+import { communityPostLikes, communityPosts, media, places, trips, users } from "@/db/schema";
 import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { isUnauthenticatedError, jsonError, zodErrorResponse } from "@/lib/api-utils";
 import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
@@ -80,6 +80,21 @@ export async function GET() {
 
   const viewer = await getCurrentUser();
 
+  // Like counts and the viewer's own like, batched the same way images are -
+  // one extra query for all posts on the page rather than one per post.
+  const likeCountByPost = new Map<string, number>();
+  const likedByMe = new Set<string>();
+  if (postIds.length > 0) {
+    const likeRows = await db
+      .select({ postId: communityPostLikes.postId, userId: communityPostLikes.userId })
+      .from(communityPostLikes)
+      .where(inArray(communityPostLikes.postId, postIds));
+    for (const row of likeRows) {
+      likeCountByPost.set(row.postId, (likeCountByPost.get(row.postId) ?? 0) + 1);
+      if (viewer && row.userId === viewer.id) likedByMe.add(row.postId);
+    }
+  }
+
   return NextResponse.json({
     posts: rows.map((row) => ({
       id: row.id,
@@ -92,6 +107,8 @@ export async function GET() {
       authorName: row.authorName,
       isMine: viewer ? viewer.id === row.authorId : false,
       imageUrl: imagesByPost.get(row.id) ?? null,
+      likeCount: likeCountByPost.get(row.id) ?? 0,
+      likedByMe: likedByMe.has(row.id),
       // A place is only offered onward if it is still publicly approved, so a
       // post cannot become a back door to a withdrawn place.
       place:

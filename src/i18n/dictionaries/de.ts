@@ -88,6 +88,9 @@ const de = {
     emptyNearby: "Aktiviere den Standort, um zu sehen, was in der Nähe ist.",
     nearbyFallback: "Noch keine gelisteten Orte in deiner Nähe - hier sind einige besonders empfehlenswerte Ziele",
     enableLocation: "Meinen Standort verwenden",
+    locationPromptTitle: "Standort aktivieren",
+    locationPromptBody: "Damit wir dir gleich beim Öffnen der App großartige Orte in deiner Nähe vorschlagen können.",
+    locationPromptLater: "Nicht jetzt",
   },
   explore: {
     title: "Entdecken",

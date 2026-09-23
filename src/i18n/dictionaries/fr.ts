@@ -88,6 +88,9 @@ const fr = {
     emptyNearby: "Activez la localisation pour voir ce qu'il y a autour de vous.",
     nearbyFallback: "Aucun lieu répertorié près de vous pour l'instant - voici quelques destinations remarquables",
     enableLocation: "Utiliser ma position",
+    locationPromptTitle: "Activer la position",
+    locationPromptBody: "Pour vous suggérer de superbes endroits près de vous dès l'ouverture de l'appli.",
+    locationPromptLater: "Pas maintenant",
   },
   explore: {
     title: "Explorer",

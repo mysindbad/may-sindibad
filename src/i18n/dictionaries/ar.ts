@@ -88,6 +88,9 @@ const ar = {
     emptyNearby: "فعّل الموقع لترى ما يحيط بك.",
     nearbyFallback: "لا توجد أماكن مسجّلة قريبة منك بعد، إليك وجهات مميزة نقترحها عليك",
     enableLocation: "استخدام موقعي",
+    locationPromptTitle: "فعّل الموقع",
+    locationPromptBody: "باش نقترح عليك أماكن رائعة قريبة منك، فور ما تفتح التطبيق.",
+    locationPromptLater: "ليس الآن",
   },
   explore: {
     title: "استكشاف",

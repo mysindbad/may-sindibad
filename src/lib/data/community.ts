@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { communityPosts, media, users } from "@/db/schema";
 
@@ -12,7 +12,11 @@ export interface LatestCommunityPost {
   imageUrl: string | null;
 }
 
-/** One published post for a home page preview - the full feed lives at /community. */
+/** One published post for a home page preview - the full feed lives at
+ * /community. Excludes "story" the same way the feed itself does: those rows
+ * are ephemeral and only ever shown through the story tray, so a preview
+ * that linked to /community for one would land the traveller on a feed that
+ * has no trace of it. */
 export async function getLatestCommunityPost(): Promise<LatestCommunityPost | null> {
   const [row] = await db
     .select({
@@ -24,7 +28,7 @@ export async function getLatestCommunityPost(): Promise<LatestCommunityPost | nu
     })
     .from(communityPosts)
     .innerJoin(users, eq(communityPosts.userId, users.id))
-    .where(eq(communityPosts.status, "published"))
+    .where(and(eq(communityPosts.status, "published"), ne(communityPosts.kind, "story")))
     .orderBy(desc(communityPosts.createdAt))
     .limit(1);
   if (!row) return null;

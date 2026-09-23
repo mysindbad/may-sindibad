@@ -86,6 +86,9 @@ const en = {
     emptyNearby: "Turn on location to see what's around you.",
     nearbyFallback: "No listed places near you yet - here are some notable destinations",
     enableLocation: "Use my location",
+    locationPromptTitle: "Turn on location",
+    locationPromptBody: "So we can suggest great places near you as soon as you open the app.",
+    locationPromptLater: "Not now",
   },
   explore: {
     title: "Explore",

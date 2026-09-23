@@ -1,92 +1,115 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { Button } from "@/components/ui/primitives";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { PlaceCard, type PlaceCardData } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 
-type Status = "idle" | "locating" | "loading" | "ready" | "denied" | "error";
+type Status = "loading" | "ready";
+type NearbyResponse = { places?: PlaceCardData[]; contextCity?: string | null };
 
+/** Asking for location is LocationPrompt's job (a one-time popup) - this
+ * component only ever shows content: the traveller's own real nearby places
+ * when permission already exists, generally recommended ones otherwise, and
+ * it re-fetches for real the moment the popup reports a fresh grant. */
 export function NearbyDiscovery() {
   const { dict, locale } = useLocale();
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<Status>("loading");
   const [city, setCity] = useState<string | null>(null);
   const [nearby, setNearby] = useState<PlaceCardData[]>([]);
   const [isFallback, setIsFallback] = useState(false);
 
-  async function handleEnableLocation() {
-    setStatus("locating");
-    if (!("geolocation" in navigator)) {
-      setStatus("error");
-      return;
+  async function loadFallback() {
+    try {
+      const res = await fetch(`/api/places?recommended=true&limit=6`);
+      const data: NearbyResponse = res.ok ? await res.json() : {};
+      setNearby(data.places ?? []);
+      setCity(null);
+      setIsFallback(true);
+    } finally {
+      setStatus("ready");
+    }
+  }
+
+  async function loadReal(position: { lat: number; lng: number }) {
+    try {
+      // The traveller may be just outside the first, tighter radius - widen
+      // the search before giving up rather than showing "nothing nearby"
+      // when a real result was 80km away instead of 75.
+      const RADII_KM = [75, 250];
+      let data: NearbyResponse = {};
+      for (const radiusKm of RADII_KM) {
+        const params = new URLSearchParams({
+          lat: String(position.lat),
+          lng: String(position.lng),
+          radiusKm: String(radiusKm),
+          limit: "6",
+        });
+        const res = await fetch(`/api/places?${params.toString()}`);
+        if (!res.ok) throw new Error("nearby lookup failed");
+        data = await res.json();
+        if ((data.places?.length ?? 0) > 0) break;
+      }
+
+      if ((data.places?.length ?? 0) === 0) {
+        await loadFallback();
+        return;
+      }
+      setNearby(data.places ?? []);
+      setCity(data.contextCity ?? null);
+      setIsFallback(false);
+      setStatus("ready");
+    } catch {
+      await loadFallback();
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function tryReal() {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (!cancelled) void loadReal({ lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        () => {
+          if (!cancelled) void loadFallback();
+        },
+        { timeout: 8000, maximumAge: 60_000, enableHighAccuracy: false },
+      );
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        setStatus("loading");
-        try {
-          // The traveller may be just outside the first, tighter radius -
-          // widen the search before giving up rather than showing "nothing
-          // nearby" when a real result was 80km away instead of 75.
-          const RADII_KM = [75, 250];
-          let data: { places?: PlaceCardData[]; contextCity?: string | null } = {};
-          for (const radiusKm of RADII_KM) {
-            const params = new URLSearchParams({
-              lat: String(position.coords.latitude),
-              lng: String(position.coords.longitude),
-              radiusKm: String(radiusKm),
-              limit: "6",
-            });
-            const res = await fetch(`/api/places?${params.toString()}`);
-            if (!res.ok) throw new Error("nearby lookup failed");
-            data = await res.json();
-            if ((data.places?.length ?? 0) > 0) break;
-          }
+    if (!("geolocation" in navigator)) {
+      void loadFallback();
+    } else if ("permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((result) => {
+          if (cancelled) return;
+          if (result.state === "granted") tryReal();
+          else void loadFallback();
+        })
+        .catch(() => {
+          if (!cancelled) void loadFallback();
+        });
+    } else {
+      void loadFallback();
+    }
 
-          // Nothing within even the widest radius: the destination simply
-          // isn't covered yet, but the traveller asked to see places, so
-          // show well-regarded ones instead of a dead end.
-          let fallback = false;
-          if ((data.places?.length ?? 0) === 0) {
-            const fallbackRes = await fetch(`/api/places?recommended=true&limit=6`);
-            if (fallbackRes.ok) {
-              data = await fallbackRes.json();
-              fallback = true;
-            }
-          }
+    function onGranted(event: Event) {
+      const detail = (event as CustomEvent<{ lat: number; lng: number }>).detail;
+      if (detail) void loadReal(detail);
+    }
+    window.addEventListener("sindbad:location-granted", onGranted);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("sindbad:location-granted", onGranted);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-          setNearby(data.places ?? []);
-          setCity(fallback ? null : (data.contextCity ?? null));
-          setIsFallback(fallback);
-          setStatus("ready");
-        } catch {
-          setStatus("error");
-        }
-      },
-      (error) => setStatus(error.code === error.PERMISSION_DENIED ? "denied" : "error"),
-      { timeout: 8000, maximumAge: 60_000, enableHighAccuracy: false },
-    );
-  }
-
-  if (status === "idle" || status === "denied" || status === "error") {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-sky-500/10 to-turquoise-500/10 px-4 py-3">
-        <span className="shrink-0 text-xl" aria-hidden="true">
-          📍
-        </span>
-        <p className="flex-1 text-sm text-slate-600 dark:text-slate-400">
-          {status === "denied" ? dict.errors.forbidden : status === "error" ? dict.common.somethingWentWrong : dict.home.emptyNearby}
-        </p>
-        <Button variant="primary" size="sm" className="shrink-0" onClick={handleEnableLocation}>
-          {dict.home.enableLocation}
-        </Button>
-      </div>
-    );
-  }
-
-  if (status === "locating" || status === "loading") {
+  if (status === "loading") {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[0, 1, 2].map((i) => (

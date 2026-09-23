@@ -14,6 +14,7 @@ import { formatDateRange } from "@/lib/utils";
 import { PlaceCard } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 import { NearbyDiscovery } from "@/components/home/NearbyDiscovery";
+import { LocationPrompt } from "@/components/home/LocationPrompt";
 import { Card } from "@/components/ui/primitives";
 
 const COMMUNITY_CHIPS = [
@@ -59,18 +60,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-6">
+      <LocationPrompt />
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-sky-600 p-6 text-white shadow-[var(--shadow-elevated)] sm:p-8">
         <div className="pointer-events-none absolute -end-10 -top-16 h-52 w-52 rounded-full bg-sky-400/25 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-24 -start-12 h-56 w-56 rounded-full bg-turquoise-400/15 blur-3xl" aria-hidden="true" />
         <Image
           src="/brand/genie.png"
           alt=""
-          width={128}
-          height={128}
+          width={176}
+          height={176}
           priority
-          className="pointer-events-none absolute -end-2 -top-4 h-24 w-24 drop-shadow-[0_8px_16px_rgba(7,28,51,0.4)] sm:h-32 sm:w-32"
+          className="pointer-events-none absolute -end-4 -top-6 h-32 w-32 drop-shadow-[0_10px_20px_rgba(7,28,51,0.45)] sm:h-44 sm:w-44"
         />
-        <div className="relative max-w-[76%] sm:max-w-md">
+        <div className="relative max-w-[62%] sm:max-w-md">
           <p className="text-sm font-medium text-sky-200">{greeting}</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{dict.home.heroTitlePlanner}</h1>
           <p className="mt-2 text-sm text-sky-100">{dict.home.heroSubtitle}</p>
@@ -94,7 +96,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <p className="text-base font-bold text-brand-950 dark:text-sand-50">✨ {dict.home.askSindbad}</p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.home.askSindbadHint}</p>
           </div>
-          <Image src="/brand/genie.png" alt="" width={72} height={72} className="shrink-0" />
+          <Image src="/brand/genie.png" alt="" width={96} height={96} className="shrink-0" />
         </div>
       </Link>
 
@@ -131,7 +133,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
         <div className="mb-3 grid grid-cols-4 gap-2">
           {COMMUNITY_CHIPS.map((chip) => (
-            <Link key={chip.kind} href={`/${locale}/community`} className="flex flex-col items-center gap-1.5 text-center">
+            <Link
+              key={chip.kind}
+              href={chip.kind === "story" ? `/${locale}/community?story=open` : `/${locale}/community`}
+              className="flex flex-col items-center gap-1.5 text-center"
+            >
               <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${chip.gradient} text-xl text-white shadow-sm`}>
                 {chip.icon}
               </span>

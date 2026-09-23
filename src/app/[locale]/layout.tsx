@@ -43,9 +43,14 @@ export const metadata: Metadata = {
   },
 };
 
+// Pinch/double-tap zoom on the page itself is what makes a PWA feel like a
+// browser tab instead of an installed app - every screen already has its own
+// controls (the map has its own pinch-zoom), so the page never needs to.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#0b3552",
   viewportFit: "cover",
 };

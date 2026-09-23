@@ -88,6 +88,9 @@ const es = {
     emptyNearby: "Activa la ubicación para ver qué hay cerca de ti.",
     nearbyFallback: "Todavía no hay lugares registrados cerca de ti - aquí tienes algunos destinos destacados",
     enableLocation: "Usar mi ubicación",
+    locationPromptTitle: "Activar ubicación",
+    locationPromptBody: "Para sugerirte lugares increíbles cerca de ti en cuanto abras la app.",
+    locationPromptLater: "Ahora no",
   },
   explore: {
     title: "Explorar",
