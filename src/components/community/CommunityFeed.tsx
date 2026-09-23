@@ -52,6 +52,10 @@ export function CommunityFeed() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reported, setReported] = useState<Record<string, boolean>>({});
+  // Collapsed to a single row until the traveller means to post - the full
+  // form (kind, photo, trip) sitting open at all times is what made the
+  // composer and the feed below it read as one dissolved block.
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -118,6 +122,7 @@ export function CommunityFeed() {
       setBody("");
       setTripId("");
       clearPhoto();
+      setComposerOpen(false);
       await load();
     } catch {
       setError(dict.errors.network);
@@ -155,64 +160,94 @@ export function CommunityFeed() {
     <div className="space-y-5">
       {user ? (
         <Card className="p-4">
-          <form onSubmit={submit} className="space-y-3">
-            <Select value={kind} onChange={(e) => setKind(e.target.value as (typeof KINDS)[number])} aria-label={dict.communityFeed.kind}>
-              <option value="moment">{dict.communityFeed.kindMoment}</option>
-              <option value="tip">{dict.communityFeed.kindTip}</option>
-              <option value="place">{dict.communityFeed.kindPlace}</option>
-            </Select>
-            <Textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={3}
-              required
-              minLength={2}
-              maxLength={4000}
-              placeholder={dict.communityFeed.placeholder}
-              aria-label={dict.communityFeed.placeholder}
-            />
-
-            {myTrips.length > 0 && (
-              <Select value={tripId} onChange={(e) => setTripId(e.target.value)} aria-label={dict.communityFeed.attachTrip}>
-                <option value="">{dict.communityFeed.noTripOption}</option>
-                {myTrips.map((trip) => (
-                  <option key={trip.id} value={trip.id}>
-                    {trip.title} — {trip.destinationCity}
-                  </option>
-                ))}
-              </Select>
-            )}
-
-            <div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="community-photo-input" />
-              {photoPreview ? (
-                <div className="relative inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview before upload, not a remote image */}
-                  <img src={photoPreview} alt="" className="h-24 w-24 rounded-xl object-cover" />
-                  <button
-                    type="button"
-                    onClick={clearPhoto}
-                    aria-label={dict.communityFeed.removePhoto}
-                    className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-950 text-xs text-white shadow-[var(--shadow-card)]"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <label
-                  htmlFor="community-photo-input"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/20 dark:text-slate-300 dark:hover:bg-white/5"
+          {composerOpen ? (
+            <form onSubmit={submit} className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <Select value={kind} onChange={(e) => setKind(e.target.value as (typeof KINDS)[number])} aria-label={dict.communityFeed.kind}>
+                  <option value="moment">{dict.communityFeed.kindMoment}</option>
+                  <option value="tip">{dict.communityFeed.kindTip}</option>
+                  <option value="place">{dict.communityFeed.kindPlace}</option>
+                </Select>
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(false)}
+                  aria-label={dict.common.cancel}
+                  className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
                 >
-                  📷 {dict.communityFeed.addPhoto}
-                </label>
-              )}
-            </div>
+                  ✕
+                </button>
+              </div>
+              <Textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={3}
+                required
+                minLength={2}
+                maxLength={4000}
+                placeholder={dict.communityFeed.placeholder}
+                aria-label={dict.communityFeed.placeholder}
+                autoFocus
+              />
 
-            {error && <InlineAlert tone="error">{error}</InlineAlert>}
-            <Button type="submit" size="sm" loading={busy}>
-              {dict.communityFeed.share}
-            </Button>
-          </form>
+              {myTrips.length > 0 && (
+                <Select value={tripId} onChange={(e) => setTripId(e.target.value)} aria-label={dict.communityFeed.attachTrip}>
+                  <option value="">{dict.communityFeed.noTripOption}</option>
+                  {myTrips.map((trip) => (
+                    <option key={trip.id} value={trip.id}>
+                      {trip.title} — {trip.destinationCity}
+                    </option>
+                  ))}
+                </Select>
+              )}
+
+              <div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="community-photo-input" />
+                {photoPreview ? (
+                  <div className="relative inline-block">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview before upload, not a remote image */}
+                    <img src={photoPreview} alt="" className="h-24 w-24 rounded-xl object-cover" />
+                    <button
+                      type="button"
+                      onClick={clearPhoto}
+                      aria-label={dict.communityFeed.removePhoto}
+                      className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-950 text-xs text-white shadow-[var(--shadow-card)]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="community-photo-input"
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/20 dark:text-slate-300 dark:hover:bg-white/5"
+                  >
+                    📷 {dict.communityFeed.addPhoto}
+                  </label>
+                )}
+              </div>
+
+              {error && <InlineAlert tone="error">{error}</InlineAlert>}
+              <Button type="submit" size="sm" loading={busy}>
+                {dict.communityFeed.share}
+              </Button>
+            </form>
+          ) : (
+            <button type="button" onClick={() => setComposerOpen(true)} className="flex w-full items-center gap-3 text-start">
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                <img src={user.avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-800 text-sm font-semibold text-white">
+                  {user.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className="flex-1 truncate rounded-full bg-slate-100 px-4 py-2.5 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+                {dict.communityFeed.placeholder}
+              </span>
+              <span className="shrink-0 text-lg" aria-hidden="true">
+                📷
+              </span>
+            </button>
+          )}
         </Card>
       ) : (
         <InlineAlert tone="info">{dict.communityFeed.signInToPost}</InlineAlert>

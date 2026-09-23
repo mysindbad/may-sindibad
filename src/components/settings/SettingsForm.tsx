@@ -9,6 +9,7 @@ import { ConfirmButton, InlineAlert } from "@/components/ui/feedback";
 import { buildLoginPath } from "@/lib/auth/return-path";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { SindbadMemoryPanel } from "./SindbadMemoryPanel";
+import { SettingsSection } from "./SettingsSection";
 
 export function SettingsForm({ user }: { user: SessionUser }) {
   const { dict, locale } = useLocale();
@@ -117,54 +118,62 @@ export function SettingsForm({ user }: { user: SessionUser }) {
     <div className="mx-auto max-w-md space-y-6 px-4 py-6">
       <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{dict.settings.title}</h1>
 
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
-            <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
-          ) : (
-            <div className="grid h-16 w-16 place-items-center rounded-full bg-brand-800 text-xl font-semibold text-white">
-              {name.slice(0, 1).toUpperCase()}
+      <div className="space-y-3">
+        <SettingsSection icon="👤" title={dict.profile.title} subtitle={name} defaultOpen>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
+              ) : (
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-brand-800 text-xl font-semibold text-white">
+                  {name.slice(0, 1).toUpperCase()}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div>
-          <input ref={avatarInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="avatar-input" />
-          <label
-            htmlFor="avatar-input"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-brand-800 hover:bg-slate-50 dark:border-white/15 dark:text-sky-300 dark:hover:bg-white/5"
-          >
-            {avatarBusy ? dict.common.loading : `📷 ${dict.settings.changePhoto}`}
-          </label>
-        </div>
-      </div>
+            <div>
+              <input ref={avatarInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" id="avatar-input" />
+              <label
+                htmlFor="avatar-input"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-brand-800 hover:bg-slate-50 dark:border-white/15 dark:text-sky-300 dark:hover:bg-white/5"
+              >
+                {avatarBusy ? dict.common.loading : `📷 ${dict.settings.changePhoto}`}
+              </label>
+            </div>
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="settings-name">{dict.auth.name}</Label>
-          <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} minLength={2} required />
-        </div>
-        <div>
-          <Label htmlFor="settings-home-city">{dict.settings.homeCity}</Label>
-          <Input id="settings-home-city" value={homeCity} onChange={(e) => setHomeCity(e.target.value)} placeholder={dict.settings.homeCityPlaceholder} />
-        </div>
-        {result && <InlineAlert tone={result.tone}>{result.text}</InlineAlert>}
-        <Button type="submit" loading={busy}>
-          {dict.common.save}
-        </Button>
-      </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="settings-name">{dict.auth.name}</Label>
+              <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} minLength={2} required />
+            </div>
+            <div>
+              <Label htmlFor="settings-home-city">{dict.settings.homeCity}</Label>
+              <Input
+                id="settings-home-city"
+                value={homeCity}
+                onChange={(e) => setHomeCity(e.target.value)}
+                placeholder={dict.settings.homeCityPlaceholder}
+              />
+            </div>
+            {result && <InlineAlert tone={result.tone}>{result.text}</InlineAlert>}
+            <Button type="submit" loading={busy}>
+              {dict.common.save}
+            </Button>
+          </form>
+        </SettingsSection>
 
-      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
-        <AppearanceSettings />
-      </div>
+        <SettingsSection icon="🎨" title={dict.settings.appearance}>
+          <AppearanceSettings />
+        </SettingsSection>
 
-      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
-        <SindbadMemoryPanel />
-      </div>
+        <SettingsSection icon="🧠" title={dict.sindbadMemory.title} subtitle={dict.sindbadMemory.subtitle}>
+          <SindbadMemoryPanel />
+        </SettingsSection>
 
-      <div className="border-t border-slate-200 pt-5 dark:border-white/10">
-        <h2 className="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">{dict.settings.account}</h2>
-        <ConfirmButton label={dict.settings.deleteAccount} confirmLabel={dict.settings.deleteAccountConfirm} onConfirm={handleDelete} />
+        <SettingsSection icon="⚠️" title={dict.settings.account} danger>
+          <ConfirmButton label={dict.settings.deleteAccount} confirmLabel={dict.settings.deleteAccountConfirm} onConfirm={handleDelete} />
+        </SettingsSection>
       </div>
     </div>
   );

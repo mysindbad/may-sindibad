@@ -38,7 +38,6 @@ export function AppearanceSettings() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold text-brand-900 dark:text-slate-200">{dict.settings.appearance}</h2>
       <div>
         <Label htmlFor="settings-language">{dict.settings.language}</Label>
         <Select id="settings-language" value={locale} onChange={(e) => switchLocale(e.target.value)}>

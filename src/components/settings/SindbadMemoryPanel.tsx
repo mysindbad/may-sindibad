@@ -56,11 +56,6 @@ export function SindbadMemoryPanel() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-brand-900 dark:text-slate-200">{dict.sindbadMemory.title}</h2>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.sindbadMemory.subtitle}</p>
-      </div>
-
       {memories === null && <Skeleton className="h-16 w-full" />}
 
       {memories !== null && memories.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{dict.sindbadMemory.empty}</p>}
