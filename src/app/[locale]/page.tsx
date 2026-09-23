@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { isLocale, type Locale } from "@/i18n/config";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/getDictionary";
@@ -59,33 +60,43 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-6">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-sky-600 p-6 text-white shadow-[var(--shadow-elevated)] sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-turquoise-400/15 blur-3xl" aria-hidden="true" />
-        <div className="relative">
+        <div className="pointer-events-none absolute -end-10 -top-16 h-52 w-52 rounded-full bg-sky-400/25 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 -start-12 h-56 w-56 rounded-full bg-turquoise-400/15 blur-3xl" aria-hidden="true" />
+        <Image
+          src="/brand/genie.png"
+          alt=""
+          width={128}
+          height={128}
+          priority
+          className="pointer-events-none absolute -end-2 -top-4 h-24 w-24 drop-shadow-[0_8px_16px_rgba(7,28,51,0.4)] sm:h-32 sm:w-32"
+        />
+        <div className="relative max-w-[76%] sm:max-w-md">
           <p className="text-sm font-medium text-sky-200">{greeting}</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{dict.home.heroTitlePlanner}</h1>
-          <p className="mt-2 max-w-md text-sm text-sky-100">{dict.home.heroSubtitle}</p>
-          <form action={`/${locale}/explore`} method="GET" className="relative mt-5">
-            <input
-              type="text"
-              name="city"
-              placeholder={dict.home.searchPlaceholder}
-              className="w-full rounded-xl border border-white/20 bg-white/95 py-3 ps-4 pe-11 text-sm text-brand-950 shadow-sm placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-white/40"
-            />
-            <button type="submit" aria-label={dict.common.search} className="absolute inset-y-0 end-0 flex items-center pe-3.5 text-slate-400">
-              🔍
-            </button>
-          </form>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link
-              href={`/${locale}/ai`}
-              className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 shadow-md transition-shadow hover:shadow-lg"
-            >
-              ✨ {dict.home.askSindbad}
-            </Link>
-          </div>
+          <p className="mt-2 text-sm text-sky-100">{dict.home.heroSubtitle}</p>
         </div>
+        <form action={`/${locale}/explore`} method="GET" className="relative mt-5">
+          <input
+            type="text"
+            name="city"
+            placeholder={dict.home.searchPlaceholder}
+            className="w-full rounded-xl border border-white/20 bg-white/95 py-3 ps-4 pe-11 text-sm text-brand-950 shadow-sm placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-white/40"
+          />
+          <button type="submit" aria-label={dict.common.search} className="absolute inset-y-0 end-0 flex items-center pe-3.5 text-slate-400">
+            🔍
+          </button>
+        </form>
       </section>
+
+      <Link href={`/${locale}/ai`} className="block">
+        <div className="relative flex items-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500/10 via-turquoise-500/10 to-transparent p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)] dark:from-sky-500/15 dark:via-turquoise-500/10">
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-bold text-brand-950 dark:text-sand-50">✨ {dict.home.askSindbad}</p>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{dict.home.askSindbadHint}</p>
+          </div>
+          <Image src="/brand/genie.png" alt="" width={72} height={72} className="shrink-0" />
+        </div>
+      </Link>
 
       {activeTrip && (
         <section>

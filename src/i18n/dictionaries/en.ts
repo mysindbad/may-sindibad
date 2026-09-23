@@ -75,6 +75,7 @@ const en = {
     heroSubtitle: "Discover amazing places .. unforgettable trips",
     searchPlaceholder: "Search for a destination, city or place...",
     askSindbad: "Ask Sindbad AI",
+    askSindbadHint: "Get suggestions tailored to your trip",
     nearbyTitle: "Near you",
     savedTitle: "Saved for later",
     tripContextTitle: "Your trip",

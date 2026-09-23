@@ -77,6 +77,7 @@ const ru = {
     heroSubtitle: "Откройте удивительные места .. незабываемые путешествия",
     searchPlaceholder: "Найдите направление, город или место...",
     askSindbad: "Спросить Sindbad AI",
+    askSindbadHint: "Получите персональные рекомендации для вашей поездки",
     nearbyTitle: "Рядом с вами",
     savedTitle: "Сохранено",
     tripContextTitle: "Ваша поездка",

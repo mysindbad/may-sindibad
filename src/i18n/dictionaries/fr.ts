@@ -77,6 +77,7 @@ const fr = {
     heroSubtitle: "Découvrez des lieux extraordinaires .. des voyages inoubliables",
     searchPlaceholder: "Recherchez une destination, une ville ou un lieu...",
     askSindbad: "Demander à Sindbad AI",
+    askSindbadHint: "Obtenez des suggestions personnalisées pour votre voyage",
     nearbyTitle: "Près de vous",
     savedTitle: "Enregistrés",
     tripContextTitle: "Votre voyage",

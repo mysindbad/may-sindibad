@@ -77,6 +77,7 @@ const ar = {
     heroSubtitle: "اكتشف أماكن مذهلة .. رحلات لا تُنسى",
     searchPlaceholder: "ابحث عن وجهة، مدينة أو مكان...",
     askSindbad: "اسأل سندباد الذكي",
+    askSindbadHint: "احصل على اقتراحات مخصصة لرحلتك",
     nearbyTitle: "بالقرب منك",
     savedTitle: "المحفوظات",
     tripContextTitle: "رحلتك",
