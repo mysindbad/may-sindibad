@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { reports } from "@/db/schema";
@@ -12,18 +10,8 @@ export const dynamic = "force-dynamic";
 const STATUSES = ["open", "reviewed", "dismissed", "actioned"] as const;
 type ReportStatus = (typeof STATUSES)[number];
 
-export default async function BackofficeReportsPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string }>;
-}) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
-
+export default async function ControlRoomReportsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const dict = await getDictionary("ar");
   const { status: rawStatus } = await searchParams;
   const status: ReportStatus = STATUSES.includes(rawStatus as ReportStatus) ? (rawStatus as ReportStatus) : "open";
 
@@ -42,11 +30,7 @@ export default async function BackofficeReportsPage({
         <h1 className="text-xl font-semibold text-white">{dict.backoffice.navReports}</h1>
       </div>
 
-      <SectionTabs
-        basePath={`/${locale}/backoffice/reports`}
-        active={status}
-        tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))}
-      />
+      <SectionTabs basePath="/control-room/reports" active={status} tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))} />
 
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-400">{dict.admin.noReports}</p>

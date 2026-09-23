@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { count, eq, inArray, sum } from "drizzle-orm";
-import { notFound } from "next/navigation";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { bookings, contributions, payments, places, providers, reports, reviews, users } from "@/db/schema";
@@ -10,11 +8,8 @@ import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function BackofficeOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
+export default async function ControlRoomOverviewPage() {
+  const dict = await getDictionary("ar");
 
   const [
     [userCount],
@@ -41,16 +36,16 @@ export default async function BackofficeOverviewPage({ params }: { params: Promi
   ]);
 
   const attentionItems = [
-    { href: "/backoffice/reports", count: openReportCount.value, label: dict.backoffice.statOpenReports, icon: "🚩" },
-    { href: "/backoffice/providers", count: pendingProviderCount.value, label: dict.backoffice.statPendingProviders, icon: "🏪" },
-    { href: "/backoffice/contributions", count: pendingContributionCount.value, label: dict.backoffice.statPendingContributions, icon: "📝" },
-    { href: "/backoffice/reviews", count: flaggedReviewCount.value, label: dict.backoffice.statFlaggedReviews, icon: "⭐" },
+    { href: "/control-room/reports", count: openReportCount.value, label: dict.backoffice.statOpenReports, icon: "🚩" },
+    { href: "/control-room/providers", count: pendingProviderCount.value, label: dict.backoffice.statPendingProviders, icon: "🏪" },
+    { href: "/control-room/contributions", count: pendingContributionCount.value, label: dict.backoffice.statPendingContributions, icon: "📝" },
+    { href: "/control-room/reviews", count: flaggedReviewCount.value, label: dict.backoffice.statFlaggedReviews, icon: "⭐" },
   ].filter((item) => item.count > 0);
 
   const revenueDisplay =
     revenueRows.length === 0
       ? formatCurrency(0, "USD")
-      : revenueRows.map((row) => formatCurrency(row.total ?? 0, row.currency, locale)).join(" · ");
+      : revenueRows.map((row) => formatCurrency(row.total ?? 0, row.currency, "ar")).join(" · ");
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -79,7 +74,7 @@ export default async function BackofficeOverviewPage({ params }: { params: Promi
             {attentionItems.map((item) => (
               <Link
                 key={item.href}
-                href={`/${locale}${item.href}`}
+                href={item.href}
                 className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 transition-colors hover:bg-amber-400/10"
               >
                 <span className="flex items-center gap-2.5 text-sm font-medium text-slate-100">

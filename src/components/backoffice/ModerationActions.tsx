@@ -3,10 +3,9 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { buildLoginPath } from "@/lib/auth/return-path";
 
 function useModerationAction(endpoint: string, method: "PATCH" | "DELETE" = "PATCH") {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +20,7 @@ function useModerationAction(endpoint: string, method: "PATCH" | "DELETE" = "PAT
         body: body ? JSON.stringify(body) : undefined,
       });
       if (res.status === 401) {
-        router.push(buildLoginPath(locale, `/${locale}/backoffice`));
+        router.push("/control-room/login");
         return;
       }
       const data = await res.json().catch(() => ({}));

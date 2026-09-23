@@ -27,9 +27,9 @@ const NAV_ITEMS: NavItem[] = [
  * of it - a distinct dark shell (own nav, own header, no traveller chrome)
  * makes that obvious at a glance, on desktop and on a phone alike. */
 export function AdminShell({ adminName, children }: { adminName: string; children: ReactNode }) {
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const pathname = usePathname();
-  const base = `/${locale}/backoffice`;
+  const base = "/control-room";
 
   function isActive(href: string) {
     const full = base + href;
@@ -74,7 +74,7 @@ export function AdminShell({ adminName, children }: { adminName: string; childre
 
         <div className="space-y-3 border-t border-white/10 pt-4">
           <p className="truncate px-3 text-xs text-slate-400">{adminName}</p>
-          <Link href={`/${locale}`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200">
+          <Link href="/" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200">
             ← {dict.backoffice.backToApp}
           </Link>
         </div>
@@ -87,7 +87,7 @@ export function AdminShell({ adminName, children }: { adminName: string; childre
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-sky-500 to-turquoise-400 text-base">🧭</span>
               <p className="text-sm font-semibold text-white">{dict.backoffice.brand}</p>
             </div>
-            <Link href={`/${locale}`} className="text-xs font-medium text-slate-400">
+            <Link href="/" className="text-xs font-medium text-slate-400">
               ← {dict.backoffice.backToApp}
             </Link>
           </div>

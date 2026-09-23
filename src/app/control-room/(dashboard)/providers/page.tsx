@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { desc, eq, inArray } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { providers } from "@/db/schema";
@@ -12,18 +10,8 @@ export const dynamic = "force-dynamic";
 const TABS = ["pending", "verified", "suspended", "all"] as const;
 type Tab = (typeof TABS)[number];
 
-export default async function BackofficeProvidersPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string }>;
-}) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
-
+export default async function ControlRoomProvidersPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const dict = await getDictionary("ar");
   const { status: rawStatus } = await searchParams;
   const tab: Tab = TABS.includes(rawStatus as Tab) ? (rawStatus as Tab) : "pending";
 
@@ -53,7 +41,7 @@ export default async function BackofficeProvidersPage({
         <h1 className="text-xl font-semibold text-white">{dict.backoffice.navProviders}</h1>
       </div>
 
-      <SectionTabs basePath={`/${locale}/backoffice/providers`} active={tab} tabs={TABS.map((value) => ({ value, label: tabLabel[value] }))} />
+      <SectionTabs basePath="/control-room/providers" active={tab} tabs={TABS.map((value) => ({ value, label: tabLabel[value] }))} />
 
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-400">{dict.admin.noVerification}</p>

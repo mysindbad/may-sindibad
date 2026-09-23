@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { places, providers, reviews, users } from "@/db/schema";
@@ -12,18 +10,8 @@ export const dynamic = "force-dynamic";
 const STATUSES = ["flagged", "published", "removed"] as const;
 type ReviewStatus = (typeof STATUSES)[number];
 
-export default async function BackofficeReviewsPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string }>;
-}) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
-
+export default async function ControlRoomReviewsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const dict = await getDictionary("ar");
   const { status: rawStatus } = await searchParams;
   const status: ReviewStatus = STATUSES.includes(rawStatus as ReviewStatus) ? (rawStatus as ReviewStatus) : "flagged";
 
@@ -58,7 +46,7 @@ export default async function BackofficeReviewsPage({
         <h1 className="text-xl font-semibold text-white">{dict.backoffice.navReviews}</h1>
       </div>
 
-      <SectionTabs basePath={`/${locale}/backoffice/reviews`} active={status} tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))} />
+      <SectionTabs basePath="/control-room/reviews" active={status} tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))} />
 
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-400">{dict.backoffice.noReviewsFound}</p>

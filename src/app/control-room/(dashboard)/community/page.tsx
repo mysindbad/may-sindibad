@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { communityPosts, users } from "@/db/schema";
@@ -8,11 +6,8 @@ import { CommunityPostActions } from "@/components/backoffice/ModerationActions"
 
 export const dynamic = "force-dynamic";
 
-export default async function BackofficeCommunityPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
+export default async function ControlRoomCommunityPage() {
+  const dict = await getDictionary("ar");
 
   const rows = await db
     .select({

@@ -52,11 +52,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
     { href: "/settings", label: dict.profile.accountSettings, icon: "⚙️", gradient: "from-slate-600 to-slate-400" },
   ];
 
-  // The dashboard is the one area with no other entry point in the product.
-  if (user.role === "admin") {
-    accountLinks.push({ href: "/backoffice", label: dict.backoffice.brand, icon: "🛡️", gradient: "from-violet-700 to-fuchsia-500" });
-  }
-
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
       <div className="rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-sky-600 p-5 text-white shadow-[var(--shadow-elevated)] sm:p-6">

@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { desc, or, ilike } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/db";
@@ -10,17 +8,8 @@ import { formatDateRange } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function BackofficeUsersPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
+export default async function ControlRoomUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const dict = await getDictionary("ar");
   const [viewer, { q }] = await Promise.all([getCurrentUser(), searchParams]);
   const query = q?.trim() ?? "";
 
@@ -60,7 +49,7 @@ export default async function BackofficeUsersPage({
                 <p className="truncate text-sm font-semibold text-white">{user.name}</p>
                 <p className="truncate text-xs text-slate-400">{user.email}</p>
                 <p className="mt-0.5 text-[11px] text-slate-500">
-                  {dict.backoffice.joined}: {formatDateRange(user.createdAt.toISOString().slice(0, 10), user.createdAt.toISOString().slice(0, 10), locale)}
+                  {dict.backoffice.joined}: {formatDateRange(user.createdAt.toISOString().slice(0, 10), user.createdAt.toISOString().slice(0, 10), "ar")}
                 </p>
               </div>
               <RoleSelect userId={user.id} currentRole={user.role} isSelf={viewer?.id === user.id} />

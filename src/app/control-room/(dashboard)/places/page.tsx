@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import { and, desc, eq, ilike } from "drizzle-orm";
-import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { db } from "@/db";
 import { places } from "@/db/schema";
@@ -12,18 +10,8 @@ export const dynamic = "force-dynamic";
 const STATUSES = ["approved", "pending", "flagged", "rejected"] as const;
 type PlaceStatus = (typeof STATUSES)[number];
 
-export default async function BackofficePlacesPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string; q?: string }>;
-}) {
-  const { locale: rawLocale } = await params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
-  const dict = await getDictionary(locale);
-
+export default async function ControlRoomPlacesPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
+  const dict = await getDictionary("ar");
   const { status: rawStatus, q } = await searchParams;
   const status: PlaceStatus = STATUSES.includes(rawStatus as PlaceStatus) ? (rawStatus as PlaceStatus) : "approved";
   const query = q?.trim() ?? "";
@@ -48,7 +36,7 @@ export default async function BackofficePlacesPage({
         <h1 className="text-xl font-semibold text-white">{dict.backoffice.navPlaces}</h1>
       </div>
 
-      <SectionTabs basePath={`/${locale}/backoffice/places`} active={status} tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))} />
+      <SectionTabs basePath="/control-room/places" active={status} tabs={STATUSES.map((value) => ({ value, label: statusLabel[value] }))} />
 
       <form method="GET" className="relative">
         <input type="hidden" name="status" value={status} />
