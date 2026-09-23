@@ -1,0 +1,27 @@
+{
+  "name": "لوحة إدارة ماي سندباد",
+  "short_name": "لوحة الإدارة",
+  "description": "لوحة تحكم المشرف لتطبيق ماي سندباد.",
+  "start_url": "/ar/backoffice",
+  "scope": "/ar/backoffice",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icons/admin-dashboard-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/admin-dashboard-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
