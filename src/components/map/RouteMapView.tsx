@@ -4,7 +4,13 @@ import { useEffect, useRef } from "react";
 import { Map as MapLibreMap, Marker as MapLibreMarker, NavigationControl, LngLatBounds } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getDefaultTileStyle } from "@/lib/maps/types";
-import type { RoutePoint } from "@/lib/navigation/route";
+import { metresBetween, type RoutePoint } from "@/lib/navigation/route";
+
+/** Below this distance to the destination, a tight follow-zoom still keeps it
+ * in view - a walker arriving no longer needs the wider picture. Above it,
+ * snapping to zoom 16 on the traveller alone could push the destination and
+ * the route line right off the edge of the map. */
+const CLOSE_FOLLOW_METRES = 250;
 
 // Navigation map: the drawn route, the destination, and the traveller's live
 // position. Kept separate from MapView because that component is a simple
@@ -43,7 +49,6 @@ export function RouteMapView({
   const mapRef = useRef<MapLibreMap | null>(null);
   const readyRef = useRef(false);
   const userMarkerRef = useRef<MapLibreMarker | null>(null);
-  const hasFittedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -93,7 +98,6 @@ export function RouteMapView({
 
     return () => {
       readyRef.current = false;
-      hasFittedRef.current = false;
       userMarkerRef.current = null;
       map.remove();
       mapRef.current = null;
@@ -116,13 +120,6 @@ export function RouteMapView({
         properties: {},
         geometry: { type: "LineString", coordinates: geometry },
       });
-
-      if (geometry.length >= 2 && !hasFittedRef.current) {
-        const bounds = new LngLatBounds(geometry[0], geometry[0]);
-        for (const point of geometry) bounds.extend(point);
-        current.fitBounds(bounds, { padding: 64, maxZoom: 16, duration: 600 });
-        hasFittedRef.current = true;
-      }
     }
 
     if (readyRef.current) {
@@ -145,10 +142,20 @@ export function RouteMapView({
       userMarkerRef.current.setLngLat([position.lng, position.lat]);
     }
 
-    if (follow) {
+    if (!follow) return;
+
+    // Close to arrival, a tight zoom on the traveller still keeps the
+    // destination in frame - further out, the same tight zoom would push
+    // both the destination and the route line off the edge of the map, so
+    // fit the camera to both points instead until they are close enough.
+    if (metresBetween(position, destination) <= CLOSE_FOLLOW_METRES) {
       map.easeTo({ center: [position.lng, position.lat], zoom: Math.max(map.getZoom(), 16), duration: 700 });
+    } else {
+      const bounds = new LngLatBounds([position.lng, position.lat], [position.lng, position.lat]);
+      bounds.extend([destination.lng, destination.lat]);
+      map.fitBounds(bounds, { padding: 64, maxZoom: 16, duration: 700 });
     }
-  }, [position, follow]);
+  }, [position, follow, destination]);
 
   return <div ref={containerRef} className={className ?? "h-full w-full"} />;
 }
