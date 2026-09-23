@@ -67,6 +67,11 @@ export function RouteMapView({
     });
     mapRef.current = map;
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    // A broken tile provider (wrong URL, revoked key) fails silently
+    // per-tile otherwise - surfacing it here is what would have made a past
+    // "the map looks wrong" report diagnosable from the browser console
+    // alone, instead of needing a phone screenshot to spot a placeholder tile.
+    map.on("error", (event) => console.error("MapLibre error", event.error));
 
     new MapLibreMarker({ element: buildDot("#e4572e", 20, false) })
       .setLngLat([destination.lng, destination.lat])
