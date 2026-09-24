@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Story, StoryGroup } from "./StoryTray";
+import { EyeIcon, HeartIcon } from "./icons";
 
 const MIN_DURATION_MS = 5000;
 const MAX_DURATION_MS = 15000;
@@ -58,10 +59,14 @@ export function StoryViewer({
   const [paused, setPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [likeOverrides, setLikeOverrides] = useState<Record<string, { likedByMe: boolean; likeCount: number }>>({});
+  const [viewsOpen, setViewsOpen] = useState(false);
+  const [viewsData, setViewsData] = useState<{ count: number; viewers: { name: string; avatarUrl: string | null; liked: boolean }[] } | null>(null);
 
   const group = groups[groupIndex];
   const story = group?.stories[storyIndex];
   const duration = useMemo(() => (story ? durationFor(story) : DEFAULT_DURATION_MS), [story]);
+  const likeState = story ? (likeOverrides[story.id] ?? { likedByMe: story.likedByMe, likeCount: story.likeCount }) : null;
 
   const goNext = useCallback(() => {
     const current = groups[groupIndex];
@@ -101,6 +106,30 @@ export function StoryViewer({
   useEffect(() => {
     if (story) onSeen(story.id);
   }, [story, onSeen]);
+
+  // A story only ever records a view from someone other than its own author
+  // (the API enforces this too, but skipping the call for your own stories
+  // avoids a pointless request every time you open your own tray).
+  useEffect(() => {
+    if (!story || group?.isMine) return;
+    fetch(`/api/community/stories/${story.id}/view`, { method: "POST" }).catch(() => {});
+  }, [story, group?.isMine]);
+
+  // Close any open "who viewed this" list when moving to a different story,
+  // and for your own story, load the count eagerly (cheap, and only ever
+  // queried for your own content) so it's visible without having to tap
+  // first - tapping the indicator just expands the list underneath it.
+  useEffect(() => {
+    setViewsOpen(false);
+    setViewsData(null);
+    if (!story || !group?.isMine) return;
+    fetch(`/api/community/stories/${story.id}/views`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setViewsData(data);
+      })
+      .catch(() => {});
+  }, [story, group?.isMine]);
 
   // Accumulate time for the current story via rAF so a press-and-hold pause
   // can resume from exactly where it left off, instead of restarting.
@@ -147,6 +176,25 @@ export function StoryViewer({
     } finally {
       setDeleting(false);
     }
+  }
+
+  async function toggleLike() {
+    if (!story || !likeState) return;
+    const storyId = story.id;
+    const next = { likedByMe: !likeState.likedByMe, likeCount: likeState.likeCount + (!likeState.likedByMe ? 1 : -1) };
+    setLikeOverrides((prev) => ({ ...prev, [storyId]: next }));
+    try {
+      const res = await fetch(`/api/community/posts/${storyId}/like`, { method: next.likedByMe ? "POST" : "DELETE" });
+      if (!res.ok) throw new Error("like failed");
+      const data = (await res.json()) as { liked?: boolean; likeCount?: number };
+      setLikeOverrides((prev) => ({ ...prev, [storyId]: { likedByMe: data.liked ?? next.likedByMe, likeCount: data.likeCount ?? next.likeCount } }));
+    } catch {
+      setLikeOverrides((prev) => ({ ...prev, [storyId]: likeState }));
+    }
+  }
+
+  function toggleViews() {
+    setViewsOpen((open) => !open);
   }
 
   return (
@@ -233,7 +281,7 @@ export function StoryViewer({
             own (much larger than its visible text) bounding box. */}
         {story.imageUrl ? (
           (story.title || story.body) && (
-            <div className="pointer-events-none relative z-20 mt-auto space-y-1 px-4 pb-6">
+            <div className="pointer-events-none relative z-20 mt-auto space-y-1 px-4 pt-6">
               {story.title && <h3 className="text-lg font-semibold text-white">{story.title}</h3>}
               <p className="whitespace-pre-line text-sm leading-relaxed text-white/95">{story.body}</p>
             </div>
@@ -244,6 +292,69 @@ export function StoryViewer({
             <p className="whitespace-pre-line text-lg font-medium leading-relaxed text-white">{story.body}</p>
           </div>
         )}
+
+        {/* Interaction row: the owner sees how many people watched (tap to
+            expand who); everyone else can react with a like, the same
+            reaction the regular feed already has. mt-auto guarantees this
+            sticks to the bottom whether or not a caption rendered above it. */}
+        <div className={`relative z-20 flex items-end justify-between gap-3 px-4 pb-6 ${story.imageUrl && (story.title || story.body) ? "pt-3" : "mt-auto pt-6"}`}>
+          {group.isMine ? (
+            <div className="flex flex-col items-start gap-2">
+              {viewsOpen && (
+                <div className="max-h-40 w-56 overflow-y-auto rounded-2xl bg-black/60 p-3 backdrop-blur-sm" onClick={(event) => event.stopPropagation()}>
+                  <p className="mb-2 text-xs font-semibold text-white/80">{dict.stories.viewedBy}</p>
+                  {viewsData === null && <p className="text-xs text-white/60">{dict.common.loading}</p>}
+                  {viewsData?.viewers.length === 0 && <p className="text-xs text-white/60">{dict.stories.noViewers}</p>}
+                  {viewsData && viewsData.viewers.length > 0 && (
+                    <ul className="space-y-2">
+                      {viewsData.viewers.map((v, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          {v.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- remote avatar comes from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+                            <img src={v.avatarUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                          ) : (
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/20 text-[10px] font-semibold text-white">
+                              {v.name.slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="truncate text-sm text-white">{v.name}</span>
+                          {v.liked && <HeartIcon filled className="h-3.5 w-3.5 shrink-0 text-rose-500" />}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleViews();
+                }}
+                className="flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
+              >
+                <EyeIcon className="h-4 w-4" />
+                {viewsData ? viewsData.count : ""}
+              </button>
+            </div>
+          ) : (
+            <span />
+          )}
+
+          {!group.isMine && likeState && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void toggleLike();
+              }}
+              className={`flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1.5 text-sm font-medium backdrop-blur-sm ${likeState.likedByMe ? "text-rose-500" : "text-white"}`}
+            >
+              <HeartIcon filled={likeState.likedByMe} className="h-5 w-5" />
+              {likeState.likeCount > 0 && likeState.likeCount}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

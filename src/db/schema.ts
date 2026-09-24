@@ -616,6 +616,28 @@ export const communityPostComments = pgTable(
   (t) => [index("community_post_comments_post_idx").on(t.postId)],
 );
 
+/** One row per (story, viewer): lets a story's author see how many people -
+ * and who - have watched it, the way every real Stories UI does. A story is
+ * just a community_posts row with kind='story', so this reuses that same id
+ * rather than a separate stories table. */
+export const communityStoryViews = pgTable(
+  "community_story_views",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    viewedAt: timestamp("viewed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("community_story_views_unique").on(t.postId, t.userId),
+    index("community_story_views_post_idx").on(t.postId),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Sindbad's long-term memory of the traveller
 //

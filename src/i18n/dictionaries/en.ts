@@ -474,6 +474,8 @@ const en = {
     addStory: "Add a story",
     placeholder: "Share something that disappears in 24 hours…",
     justNow: "Just now",
+    viewedBy: "Viewed by",
+    noViewers: "No one has viewed it yet",
   },
   sindbadMemory: {
     title: "What Sindbad remembers",

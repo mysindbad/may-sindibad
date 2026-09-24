@@ -477,6 +477,8 @@ const es = {
     addStory: "Añadir una historia",
     placeholder: "Comparte algo que desaparece en 24 horas…",
     justNow: "Ahora mismo",
+    viewedBy: "Visto por",
+    noViewers: "Nadie la ha visto todavía",
   },
   sindbadMemory: {
     title: "Lo que Sindbad recuerda",

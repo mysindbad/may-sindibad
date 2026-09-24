@@ -476,6 +476,8 @@ const ar = {
     addStory: "أضف قصة",
     placeholder: "شارك شيئًا يختفي بعد 24 ساعة…",
     justNow: "الآن",
+    viewedBy: "شاهدها",
+    noViewers: "لم يشاهدها أحد بعد",
   },
   sindbadMemory: {
     title: "ما يتذكره سندباد",

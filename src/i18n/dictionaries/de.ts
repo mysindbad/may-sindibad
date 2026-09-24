@@ -477,6 +477,8 @@ const de = {
     addStory: "Story hinzufügen",
     placeholder: "Teile etwas, das nach 24 Stunden verschwindet…",
     justNow: "Gerade eben",
+    viewedBy: "Gesehen von",
+    noViewers: "Noch niemand hat sie gesehen",
   },
   sindbadMemory: {
     title: "Was Sindbad sich merkt",

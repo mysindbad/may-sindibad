@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, asc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { communityPosts, media, users } from "@/db/schema";
+import { communityPostLikes, communityPosts, media, users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 
 // Stories, not the regular feed: a story is only ever active for 24h from
@@ -46,6 +46,22 @@ export async function GET() {
 
   const viewer = await getCurrentUser();
 
+  // Like counts and the viewer's own like, batched the same way the regular
+  // feed does it - one extra query for every story on the tray rather than
+  // one per story.
+  const likeCountByPost = new Map<string, number>();
+  const likedByMe = new Set<string>();
+  if (postIds.length > 0) {
+    const likeRows = await db
+      .select({ postId: communityPostLikes.postId, userId: communityPostLikes.userId })
+      .from(communityPostLikes)
+      .where(inArray(communityPostLikes.postId, postIds));
+    for (const row of likeRows) {
+      likeCountByPost.set(row.postId, (likeCountByPost.get(row.postId) ?? 0) + 1);
+      if (viewer && row.userId === viewer.id) likedByMe.add(row.postId);
+    }
+  }
+
   // Group by author, preserving the oldest-first order within each group
   // (so tapping through one traveller's stories plays in the order they
   // posted them), then order the groups themselves: the viewer's own story
@@ -57,7 +73,16 @@ export async function GET() {
       authorName: string;
       authorAvatarUrl: string | null;
       isMine: boolean;
-      stories: { id: string; title: string | null; body: string; imageUrl: string | null; createdAt: string; expiresAt: string }[];
+      stories: {
+        id: string;
+        title: string | null;
+        body: string;
+        imageUrl: string | null;
+        createdAt: string;
+        expiresAt: string;
+        likeCount: number;
+        likedByMe: boolean;
+      }[];
     }
   >();
 
@@ -80,6 +105,8 @@ export async function GET() {
       imageUrl: imagesByPost.get(row.id) ?? null,
       createdAt: row.createdAt.toISOString(),
       expiresAt: new Date(row.createdAt.getTime() + STORY_LIFETIME_MS).toISOString(),
+      likeCount: likeCountByPost.get(row.id) ?? 0,
+      likedByMe: likedByMe.has(row.id),
     });
   }
 

@@ -477,6 +477,8 @@ const ru = {
     addStory: "Добавить историю",
     placeholder: "Поделитесь тем, что исчезнет через 24 часа…",
     justNow: "Только что",
+    viewedBy: "Просмотрели",
+    noViewers: "Пока никто не посмотрел",
   },
   sindbadMemory: {
     title: "Что помнит Синдбад",

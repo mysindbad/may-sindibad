@@ -15,7 +15,6 @@ import { PlaceCard } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 import { NearbyDiscovery } from "@/components/home/NearbyDiscovery";
 import { LocationPrompt } from "@/components/home/LocationPrompt";
-import { StoryTray } from "@/components/community/StoryTray";
 import { Card } from "@/components/ui/primitives";
 
 const COMMUNITY_CHIPS = [
@@ -93,13 +92,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* A floating mascot, not another card competing with the page content -
           fixed so it stays reachable while scrolling, and positioned with
           logical (start/end) offsets so it lands on the right side in a
-          left-to-right language and mirrors to the left in Arabic. */}
+          left-to-right language and mirrors to the left in Arabic. The
+          label keeps its own solid pill regardless of theme or what photo
+          happens to be scrolled underneath - a text-shadow alone wasn't
+          reliably legible over every background it could land on. */}
       <Link
         href={`/${locale}/ai`}
-        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-30 flex flex-col items-center gap-0.5"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-30 flex flex-col items-center gap-1"
       >
-        <Image src="/brand/genie.png" alt="" width={52} height={52} className="animate-genie-float drop-shadow-lg" />
-        <span className="text-[11px] font-semibold text-brand-950 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)] dark:text-sand-50 dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.7)]">
+        <Image src="/brand/genie.png" alt="" width={52} height={52} className="animate-genie-drift drop-shadow-lg" />
+        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-950 shadow-[var(--shadow-elevated)] dark:bg-brand-900 dark:text-sand-50">
           {dict.home.askSindbad}
         </span>
       </Link>
@@ -134,9 +136,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <Link href={`/${locale}/community`} className="text-xs font-medium text-sky-600">
             {dict.common.seeAll}
           </Link>
-        </div>
-        <div className="mb-4">
-          <StoryTray />
         </div>
         <div className="mb-3 grid grid-cols-3 gap-2">
           {COMMUNITY_CHIPS.map((chip) => (

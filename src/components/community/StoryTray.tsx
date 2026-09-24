@@ -15,6 +15,8 @@ export interface Story {
   imageUrl: string | null;
   createdAt: string;
   expiresAt: string;
+  likeCount: number;
+  likedByMe: boolean;
 }
 
 export interface StoryGroup {
