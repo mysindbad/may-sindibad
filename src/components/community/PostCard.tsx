@@ -93,6 +93,7 @@ export function PostCard({
   const [shareBusy, setShareBusy] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   async function loadComments() {
     if (comments !== null) return;
@@ -263,7 +264,18 @@ export function PostCard({
 
         {post.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
-          <img src={post.imageUrl} alt="" className="-mx-4 h-56 w-[calc(100%+2rem)] object-cover" />
+          <img
+            src={post.imageUrl}
+            alt=""
+            className="-mx-4 h-56 w-[calc(100%+2rem)] cursor-zoom-in object-cover"
+            onClick={(event) => {
+              // A photo is worth seeing full-size, like Facebook/Instagram -
+              // stop the tap from also being read as "open the permalink".
+              event.preventDefault();
+              event.stopPropagation();
+              setLightboxOpen(true);
+            }}
+          />
         )}
 
         {post.trip && (
@@ -406,6 +418,21 @@ export function PostCard({
           </div>
         )}
       </div>
+
+      {lightboxOpen && post.imageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4" onClick={() => setLightboxOpen(false)}>
+          <button
+            type="button"
+            aria-label={dict.common.close}
+            onClick={() => setLightboxOpen(false)}
+            className="absolute end-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <CloseIcon className="h-5 w-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list. */}
+          <img src={post.imageUrl} alt="" className="max-h-full max-w-full object-contain" onClick={(event) => event.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
