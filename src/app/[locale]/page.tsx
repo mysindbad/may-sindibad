@@ -90,9 +90,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </form>
       </section>
 
-      <Link href={`/${locale}/ai`} className="flex items-center gap-2 self-start rounded-full bg-gradient-to-br from-sky-500/10 via-turquoise-500/10 to-transparent py-2 ps-2.5 pe-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)] dark:from-sky-500/15 dark:via-turquoise-500/10">
-        <Image src="/brand/genie.png" alt="" width={28} height={28} className="animate-genie-float shrink-0" />
-        <span className="text-sm font-semibold text-brand-950 dark:text-sand-50">{dict.home.askSindbad}</span>
+      {/* A floating mascot, not another card competing with the page content -
+          fixed so it stays reachable while scrolling, and positioned with
+          logical (start/end) offsets so it lands on the right side in a
+          left-to-right language and mirrors to the left in Arabic. */}
+      <Link
+        href={`/${locale}/ai`}
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-30 flex flex-col items-center gap-0.5"
+      >
+        <Image src="/brand/genie.png" alt="" width={52} height={52} className="animate-genie-float drop-shadow-lg" />
+        <span className="text-[11px] font-semibold text-brand-950 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)] dark:text-sand-50 dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.7)]">
+          {dict.home.askSindbad}
+        </span>
       </Link>
 
       {activeTrip && (
