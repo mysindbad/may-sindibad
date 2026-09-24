@@ -190,7 +190,7 @@ export function PostCard({
   const canManage = post.isMine || (!post.isMine && !!user);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.03]">
+    <div className="rounded-2xl border border-slate-100 bg-white shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.03]">
       <div className="flex items-start justify-between gap-2 p-4 pb-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={post.authorName} url={post.authorAvatarUrl} />
@@ -222,8 +222,8 @@ export function PostCard({
             </button>
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute end-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
+                <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)} />
+                <div className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
                   {post.isMine ? (
                     <button
                       type="button"
@@ -339,8 +339,8 @@ export function PostCard({
             </button>
             {shareMenuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
-                <div className="absolute end-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
+                <div className="fixed inset-0 z-50" onClick={() => setShareMenuOpen(false)} />
+                <div className="absolute end-0 z-50 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
                   <button
                     type="button"
                     onClick={() => void shareExternally()}
