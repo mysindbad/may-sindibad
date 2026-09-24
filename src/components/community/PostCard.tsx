@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Badge, Button } from "@/components/ui/primitives";
@@ -162,176 +163,183 @@ export function PostCard({
   }
 
   return (
-    <div className="space-y-2 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.03]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar name={post.authorName} url={post.authorAvatarUrl} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{post.authorName}</p>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-              {formatRelativeTime(post.createdAt, locale)}
-              {post.city && (
-                <>
-                  {" · "}
-                  {post.city}
-                  {post.country ? ", " + post.country : ""}
-                </>
-              )}
-            </p>
+    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.03]">
+      {/* Tapping the post itself opens the full view, like any real feed -
+          everything actionable (like/comment/share, add-to-trip, delete)
+          lives below, outside this link, so it never fights it for taps. */}
+      <Link href={`/${locale}/community/${post.id}`} className="block space-y-2 p-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Avatar name={post.authorName} url={post.authorAvatarUrl} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{post.authorName}</p>
+              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                {formatRelativeTime(post.createdAt, locale)}
+                {post.city && (
+                  <>
+                    {" · "}
+                    {post.city}
+                    {post.country ? ", " + post.country : ""}
+                  </>
+                )}
+              </p>
+            </div>
           </div>
+          <Badge tone="sky">
+            {post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : dict.communityFeed.kindMoment}
+          </Badge>
         </div>
-        <Badge tone="sky">
-          {post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : dict.communityFeed.kindMoment}
-        </Badge>
-      </div>
 
-      {post.title && <p className="text-base font-semibold text-brand-950 dark:text-sand-50">{post.title}</p>}
-      <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{post.body}</p>
+        {post.title && <p className="text-base font-semibold text-brand-950 dark:text-sand-50">{post.title}</p>}
+        <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{post.body}</p>
 
-      {post.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
-        <img src={post.imageUrl} alt="" className="-mx-4 h-56 w-[calc(100%+2rem)] object-cover" />
-      )}
+        {post.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- remote uploads come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
+          <img src={post.imageUrl} alt="" className="-mx-4 h-56 w-[calc(100%+2rem)] object-cover" />
+        )}
 
-      {post.trip && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-sky-500/5 px-3 py-2 text-xs font-medium text-brand-800">
-          <span aria-hidden="true">🧳</span>
-          {dict.communityFeed.sharedTrip}: {post.trip.title} — {post.trip.destinationCity}, {post.trip.destinationCountry} · {post.trip.startDate} →{" "}
-          {post.trip.endDate}
-        </div>
-      )}
+        {post.trip && (
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-sky-500/5 px-3 py-2 text-xs font-medium text-brand-800">
+            <span aria-hidden="true">🧳</span>
+            {dict.communityFeed.sharedTrip}: {post.trip.title} — {post.trip.destinationCity}, {post.trip.destinationCountry} · {post.trip.startDate} →{" "}
+            {post.trip.endDate}
+          </div>
+        )}
+      </Link>
 
-      {post.place && (
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs font-medium text-brand-800">📍 {post.place.name}</span>
-          <AddToTripButton placeId={post.place.id} />
-        </div>
-      )}
+      <div className="space-y-2 px-4 pb-4">
+        {post.place && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-brand-800">📍 {post.place.name}</span>
+            <AddToTripButton placeId={post.place.id} />
+          </div>
+        )}
 
-      <div className="flex items-center gap-1 border-t border-slate-100 pt-2 dark:border-white/5">
-        <button
-          type="button"
-          disabled={!user}
-          onClick={() => onLike(post)}
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
-            post.likedByMe ? "text-rose-600 dark:text-rose-400" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
-          } ${!user ? "cursor-default" : "cursor-pointer"}`}
-        >
-          <span aria-hidden="true">{post.likedByMe ? "❤️" : "🤍"}</span>
-          {post.likeCount > 0 && <span>{post.likeCount}</span>}
-        </button>
-
-        <button
-          type="button"
-          onClick={toggleComments}
-          className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
-        >
-          <span aria-hidden="true">💬</span>
-          {post.commentCount > 0 && <span>{post.commentCount}</span>}
-        </button>
-
-        <div className="relative ms-auto">
+        <div className="flex items-center gap-1 border-t border-slate-100 pt-2 dark:border-white/5">
           <button
             type="button"
-            disabled={shareBusy}
-            onClick={() => setShareMenuOpen((open) => !open)}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-white/5"
+            disabled={!user}
+            onClick={() => onLike(post)}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
+              post.likedByMe ? "text-rose-600 dark:text-rose-400" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
+            } ${!user ? "cursor-default" : "cursor-pointer"}`}
           >
-            <span aria-hidden="true">↗️</span>
-            {dict.communityFeed.shareAction}
+            <span aria-hidden="true">{post.likedByMe ? "❤️" : "🤍"}</span>
+            {post.likeCount > 0 && <span>{post.likeCount}</span>}
           </button>
-          {shareMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
-              <div className="absolute end-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
-                <button
-                  type="button"
-                  onClick={() => void shareExternally()}
-                  className="block w-full px-3 py-2 text-start text-sm text-brand-950 hover:bg-slate-50 dark:text-sand-50 dark:hover:bg-white/5"
-                >
-                  {dict.communityFeed.shareAction}
-                </button>
-                {user && (
+
+          <button
+            type="button"
+            onClick={toggleComments}
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
+          >
+            <span aria-hidden="true">💬</span>
+            {post.commentCount > 0 && <span>{post.commentCount}</span>}
+          </button>
+
+          <div className="relative ms-auto">
+            <button
+              type="button"
+              disabled={shareBusy}
+              onClick={() => setShareMenuOpen((open) => !open)}
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-white/5"
+            >
+              <span aria-hidden="true">↗️</span>
+              {dict.communityFeed.shareAction}
+            </button>
+            {shareMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
+                <div className="absolute end-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
                   <button
                     type="button"
-                    onClick={() => void shareAsStory()}
+                    onClick={() => void shareExternally()}
                     className="block w-full px-3 py-2 text-start text-sm text-brand-950 hover:bg-slate-50 dark:text-sand-50 dark:hover:bg-white/5"
                   >
-                    {dict.communityFeed.shareToStory}
+                    {dict.communityFeed.shareAction}
                   </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {shareFeedback && <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{shareFeedback}</p>}
-
-      {commentsOpen && (
-        <div className="space-y-2.5 border-t border-slate-100 pt-2.5 dark:border-white/5">
-          {comments === null && <p className="text-xs text-slate-400">{dict.common.loading}</p>}
-          {comments !== null && comments.length === 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.communityFeed.noComments}</p>}
-          {comments !== null &&
-            comments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-2">
-                <Avatar name={comment.authorName} url={comment.authorAvatarUrl} className="h-7 w-7 text-xs" />
-                <div className="min-w-0 flex-1 rounded-2xl bg-slate-50 px-3 py-1.5 dark:bg-white/5">
-                  <p className="text-xs font-semibold text-brand-950 dark:text-sand-50">{comment.authorName}</p>
-                  <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{comment.body}</p>
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => void shareAsStory()}
+                      className="block w-full px-3 py-2 text-start text-sm text-brand-950 hover:bg-slate-50 dark:text-sand-50 dark:hover:bg-white/5"
+                    >
+                      {dict.communityFeed.shareToStory}
+                    </button>
+                  )}
                 </div>
-                {user && (user.id === comment.authorId || user.role === "admin") && (
-                  <button
-                    type="button"
-                    onClick={() => void removeComment(comment.id)}
-                    aria-label={dict.common.delete}
-                    className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
+              </>
+            )}
+          </div>
+        </div>
 
-          {user && (
-            <div className="flex items-center gap-2 pt-1">
-              <Avatar name={user.name} url={user.avatarUrl} className="h-7 w-7 text-xs" />
-              <input
-                type="text"
-                value={commentDraft}
-                onChange={(event) => setCommentDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void submitComment();
-                }}
-                maxLength={1000}
-                placeholder={dict.communityFeed.commentPlaceholder}
-                className="min-w-0 flex-1 rounded-full bg-slate-100 px-3.5 py-1.5 text-sm text-brand-950 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500/40 dark:bg-white/5 dark:text-sand-50"
-              />
-              <button
-                type="button"
-                disabled={commentBusy || !commentDraft.trim()}
-                onClick={() => void submitComment()}
-                aria-label={dict.communityFeed.commentPlaceholder}
-                className="shrink-0 text-lg text-sky-600 disabled:opacity-40"
-              >
-                ➤
-              </button>
-            </div>
+        {shareFeedback && <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{shareFeedback}</p>}
+
+        {commentsOpen && (
+          <div className="space-y-2.5 border-t border-slate-100 pt-2.5 dark:border-white/5">
+            {comments === null && <p className="text-xs text-slate-400">{dict.common.loading}</p>}
+            {comments !== null && comments.length === 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.communityFeed.noComments}</p>}
+            {comments !== null &&
+              comments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-2">
+                  <Avatar name={comment.authorName} url={comment.authorAvatarUrl} className="h-7 w-7 text-xs" />
+                  <div className="min-w-0 flex-1 rounded-2xl bg-slate-50 px-3 py-1.5 dark:bg-white/5">
+                    <p className="text-xs font-semibold text-brand-950 dark:text-sand-50">{comment.authorName}</p>
+                    <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{comment.body}</p>
+                  </div>
+                  {user && (user.id === comment.authorId || user.role === "admin") && (
+                    <button
+                      type="button"
+                      onClick={() => void removeComment(comment.id)}
+                      aria-label={dict.common.delete}
+                      className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+
+            {user && (
+              <div className="flex items-center gap-2 pt-1">
+                <Avatar name={user.name} url={user.avatarUrl} className="h-7 w-7 text-xs" />
+                <input
+                  type="text"
+                  value={commentDraft}
+                  onChange={(event) => setCommentDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void submitComment();
+                  }}
+                  maxLength={1000}
+                  placeholder={dict.communityFeed.commentPlaceholder}
+                  className="min-w-0 flex-1 rounded-full bg-slate-100 px-3.5 py-1.5 text-sm text-brand-950 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500/40 dark:bg-white/5 dark:text-sand-50"
+                />
+                <button
+                  type="button"
+                  disabled={commentBusy || !commentDraft.trim()}
+                  onClick={() => void submitComment()}
+                  aria-label={dict.communityFeed.commentPlaceholder}
+                  className="shrink-0 text-lg text-sky-600 disabled:opacity-40"
+                >
+                  ➤
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          {post.isMine && (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(post.id)}>
+              {dict.common.delete}
+            </Button>
+          )}
+          {!post.isMine && user && (
+            <Button size="sm" variant="ghost" disabled={reported} onClick={() => onReport(post.id)}>
+              {reported ? dict.community.reportSent : dict.community.report}
+            </Button>
           )}
         </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 pt-1">
-        {post.isMine && (
-          <Button size="sm" variant="ghost" onClick={() => onDelete(post.id)}>
-            {dict.common.delete}
-          </Button>
-        )}
-        {!post.isMine && user && (
-          <Button size="sm" variant="ghost" disabled={reported} onClick={() => onReport(post.id)}>
-            {reported ? dict.community.reportSent : dict.community.report}
-          </Button>
-        )}
       </div>
     </div>
   );
