@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/primitives";
 import { EmptyState, InlineAlert, Skeleton } from "@/components/ui/feedback";
 import { PostCard, type FeedPost } from "./PostCard";
 import { PostComposerModal } from "./PostComposerModal";
+import { CameraIcon } from "./icons";
 
 // The community exists to serve trips, so every post that names a place
 // carries the same add-to-trip action used in Explore and on the map. What a
@@ -106,8 +107,8 @@ export function CommunityFeed() {
             <span className="flex-1 truncate rounded-full bg-slate-100 px-4 py-2.5 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
               {dict.communityFeed.placeholder}
             </span>
-            <span className="shrink-0 text-lg" aria-hidden="true">
-              📷
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400">
+              <CameraIcon className="h-5 w-5" />
             </span>
           </button>
         </Card>

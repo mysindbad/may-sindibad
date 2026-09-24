@@ -5,6 +5,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button, Select, Textarea } from "@/components/ui/primitives";
 import { InlineAlert } from "@/components/ui/feedback";
+import { CameraIcon, CloseIcon, LightbulbIcon, PinIcon } from "./icons";
 
 interface MyTrip {
   id: string;
@@ -22,9 +23,9 @@ interface PlaceOption {
 }
 
 const KINDS = [
-  { value: "moment", icon: "📷", labelKey: "kindMoment" },
-  { value: "tip", icon: "💡", labelKey: "kindTip" },
-  { value: "place", icon: "📍", labelKey: "kindPlace" },
+  { value: "moment", Icon: CameraIcon, labelKey: "kindMoment" },
+  { value: "tip", Icon: LightbulbIcon, labelKey: "kindTip" },
+  { value: "place", Icon: PinIcon, labelKey: "kindPlace" },
 ] as const;
 
 export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; onPosted: () => void }) {
@@ -141,9 +142,9 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
             type="button"
             aria-label={dict.common.close}
             onClick={onClose}
-            className="grid h-8 w-8 place-items-center rounded-full text-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
+            className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
           >
-            ✕
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -172,7 +173,7 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                     : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
                 }`}
               >
-                <span className="text-base">{option.icon}</span>
+                <option.Icon className="h-5 w-5" />
                 {dict.communityFeed[option.labelKey]}
               </button>
             ))}
@@ -185,7 +186,9 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                   // eslint-disable-next-line @next/next/no-img-element -- remote place photos come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
                   <img src={selectedPlace.coverImageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
                 ) : (
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-800 text-white">📍</span>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-800 text-white">
+                    <PinIcon className="h-5 w-5" />
+                  </span>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-brand-950 dark:text-sand-50">{selectedPlace.name}</p>
@@ -199,7 +202,7 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                   aria-label={dict.common.cancel}
                   className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10"
                 >
-                  ✕
+                  <CloseIcon className="h-4 w-4" />
                 </button>
               </div>
             ) : (
@@ -226,7 +229,9 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                             // eslint-disable-next-line @next/next/no-img-element -- remote place photos come from arbitrary S3/local hosts, not the local image loader's fixed domain list.
                             <img src={place.coverImageUrl} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" />
                           ) : (
-                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-800 text-xs text-white">📍</span>
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-800 text-white">
+                              <PinIcon className="h-4 w-4" />
+                            </span>
                           )}
                           <span className="min-w-0">
                             <span className="block truncate text-sm text-brand-950 dark:text-sand-50">{place.name}</span>
@@ -275,9 +280,9 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                   type="button"
                   onClick={clearPhoto}
                   aria-label={dict.communityFeed.removePhoto}
-                  className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-950 text-xs text-white shadow-[var(--shadow-card)]"
+                  className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-950 text-white shadow-[var(--shadow-card)]"
                 >
-                  ✕
+                  <CloseIcon className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
@@ -285,7 +290,7 @@ export function PostComposerModal({ onClose, onPosted }: { onClose: () => void; 
                 htmlFor="community-photo-input"
                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/20 dark:text-slate-300 dark:hover:bg-white/5"
               >
-                📷 {dict.communityFeed.addPhoto}
+                <CameraIcon className="h-4 w-4" /> {dict.communityFeed.addPhoto}
               </label>
             )}
           </div>

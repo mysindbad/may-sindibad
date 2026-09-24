@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Badge, Button } from "@/components/ui/primitives";
 import { AddToTripButton } from "@/components/trips/AddToTripButton";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatDateRange, formatRelativeTime } from "@/lib/utils";
+import { BriefcaseIcon, CloseIcon, CommentIcon, HeartIcon, MoreIcon, PinIcon, SendIcon, ShareIcon } from "./icons";
 
 export interface FeedPost {
   id: string;
@@ -48,6 +48,28 @@ function Avatar({ name, url, className = "h-9 w-9 text-sm" }: { name: string; ur
   );
 }
 
+// A trip or place attached to a post is a real, actionable thing - not a
+// clause in a sentence - so it gets the same compact icon-tile treatment
+// Explore and the trip list already use, rather than a run-on line of text.
+function AttachmentCard({ icon, tone, title, subtitle, action }: { icon: ReactNode; tone: "sky" | "emerald"; title: string; subtitle: string; action?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-white/10 dark:bg-white/[0.04]">
+      <span
+        className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${
+          tone === "sky" ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+        }`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{title}</p>
+        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export function PostCard({
   post,
   onLike,
@@ -70,6 +92,7 @@ export function PostCard({
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function loadComments() {
     if (comments !== null) return;
@@ -162,34 +185,79 @@ export function PostCard({
     }
   }
 
+  const kindLabel = post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : null;
+  const canManage = post.isMine || (!post.isMine && !!user);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.03]">
-      {/* Tapping the post itself opens the full view, like any real feed -
-          everything actionable (like/comment/share, add-to-trip, delete)
-          lives below, outside this link, so it never fights it for taps. */}
-      <Link href={`/${locale}/community/${post.id}`} className="block space-y-2 p-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Avatar name={post.authorName} url={post.authorAvatarUrl} />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{post.authorName}</p>
-              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                {formatRelativeTime(post.createdAt, locale)}
-                {post.city && (
-                  <>
-                    {" · "}
-                    {post.city}
-                    {post.country ? ", " + post.country : ""}
-                  </>
-                )}
-              </p>
-            </div>
+      <div className="flex items-start justify-between gap-2 p-4 pb-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Avatar name={post.authorName} url={post.authorAvatarUrl} />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{post.authorName}</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+              {formatRelativeTime(post.createdAt, locale)}
+              {kindLabel && <> · {kindLabel}</>}
+              {post.city && (
+                <>
+                  {" · "}
+                  {post.city}
+                  {post.country ? ", " + post.country : ""}
+                </>
+              )}
+            </p>
           </div>
-          <Badge tone="sky">
-            {post.kind === "tip" ? dict.communityFeed.kindTip : post.kind === "place" ? dict.communityFeed.kindPlace : dict.communityFeed.kindMoment}
-          </Badge>
         </div>
 
+        {canManage && (
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              aria-label={dict.communityFeed.moreOptions}
+              onClick={() => setMenuOpen((open) => !open)}
+              className="grid h-8 w-8 place-items-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300"
+            >
+              <MoreIcon className="h-5 w-5" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute end-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[var(--shadow-elevated)] dark:border-white/10 dark:bg-brand-900">
+                  {post.isMine ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onDelete(post.id);
+                      }}
+                      className="block w-full px-3 py-2 text-start text-sm text-rose-600 hover:bg-slate-50 dark:text-rose-400 dark:hover:bg-white/5"
+                    >
+                      {dict.common.delete}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={reported}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onReport(post.id);
+                      }}
+                      className="block w-full px-3 py-2 text-start text-sm text-brand-950 hover:bg-slate-50 disabled:opacity-50 dark:text-sand-50 dark:hover:bg-white/5"
+                    >
+                      {reported ? dict.community.reportSent : dict.community.report}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Tapping the content itself opens the full view, like any real feed -
+          every interactive control (like/comment/share, add-to-trip, the
+          overflow menu) lives outside this link so it never fights it for taps. */}
+      <Link href={`/${locale}/community/${post.id}`} className="block space-y-2 px-4 pb-2 transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
         {post.title && <p className="text-base font-semibold text-brand-950 dark:text-sand-50">{post.title}</p>}
         <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">{post.body}</p>
 
@@ -199,53 +267,63 @@ export function PostCard({
         )}
 
         {post.trip && (
-          <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-sky-500/5 px-3 py-2 text-xs font-medium text-brand-800">
-            <span aria-hidden="true">🧳</span>
-            {dict.communityFeed.sharedTrip}: {post.trip.title} — {post.trip.destinationCity}, {post.trip.destinationCountry} · {post.trip.startDate} →{" "}
-            {post.trip.endDate}
-          </div>
+          <AttachmentCard
+            icon={<BriefcaseIcon className="h-5 w-5" />}
+            tone="sky"
+            title={post.trip.title}
+            subtitle={`${post.trip.destinationCity}, ${post.trip.destinationCountry} · ${formatDateRange(post.trip.startDate, post.trip.endDate, locale)}`}
+          />
         )}
       </Link>
 
       <div className="space-y-2 px-4 pb-4">
         {post.place && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-brand-800">📍 {post.place.name}</span>
-            <AddToTripButton placeId={post.place.id} />
-          </div>
+          <AttachmentCard
+            icon={<PinIcon className="h-5 w-5" />}
+            tone="emerald"
+            title={post.place.name}
+            subtitle={`${post.place.city}, ${post.place.country}`}
+            action={<AddToTripButton placeId={post.place.id} />}
+          />
         )}
 
-        <div className="flex items-center gap-1 border-t border-slate-100 pt-2 dark:border-white/5">
+        <div className="grid grid-cols-3 border-t border-slate-100 dark:border-white/5">
           <button
             type="button"
             disabled={!user}
             onClick={() => onLike(post)}
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
-              post.likedByMe ? "text-rose-600 dark:text-rose-400" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
+            className={`flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+              post.likedByMe ? "text-rose-600 dark:text-rose-400" : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
             } ${!user ? "cursor-default" : "cursor-pointer"}`}
           >
-            <span aria-hidden="true">{post.likedByMe ? "❤️" : "🤍"}</span>
-            {post.likeCount > 0 && <span>{post.likeCount}</span>}
+            <HeartIcon filled={post.likedByMe} className="h-5 w-5" />
+            <span>
+              {dict.communityFeed.likeAction}
+              {post.likeCount > 0 ? ` · ${post.likeCount}` : ""}
+            </span>
           </button>
 
           <button
             type="button"
             onClick={toggleComments}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
+            className="flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
           >
-            <span aria-hidden="true">💬</span>
-            {post.commentCount > 0 && <span>{post.commentCount}</span>}
+            <CommentIcon className="h-5 w-5" />
+            <span>
+              {dict.communityFeed.commentAction}
+              {post.commentCount > 0 ? ` · ${post.commentCount}` : ""}
+            </span>
           </button>
 
-          <div className="relative ms-auto">
+          <div className="relative">
             <button
               type="button"
               disabled={shareBusy}
               onClick={() => setShareMenuOpen((open) => !open)}
-              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-white/5"
+              className="flex w-full items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-white/5"
             >
-              <span aria-hidden="true">↗️</span>
-              {dict.communityFeed.shareAction}
+              <ShareIcon className="h-5 w-5" />
+              <span>{dict.communityFeed.shareAction}</span>
             </button>
             {shareMenuOpen && (
               <>
@@ -294,7 +372,7 @@ export function PostCard({
                       aria-label={dict.common.delete}
                       className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
                     >
-                      ✕
+                      <CloseIcon className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -319,27 +397,14 @@ export function PostCard({
                   disabled={commentBusy || !commentDraft.trim()}
                   onClick={() => void submitComment()}
                   aria-label={dict.communityFeed.commentPlaceholder}
-                  className="shrink-0 text-lg text-sky-600 disabled:opacity-40"
+                  className="shrink-0 text-sky-600 disabled:opacity-40 dark:text-sky-400"
                 >
-                  ➤
+                  <SendIcon className="h-5 w-5" />
                 </button>
               </div>
             )}
           </div>
         )}
-
-        <div className="flex flex-wrap gap-2 pt-1">
-          {post.isMine && (
-            <Button size="sm" variant="ghost" onClick={() => onDelete(post.id)}>
-              {dict.common.delete}
-            </Button>
-          )}
-          {!post.isMine && user && (
-            <Button size="sm" variant="ghost" disabled={reported} onClick={() => onReport(post.id)}>
-              {reported ? dict.community.reportSent : dict.community.report}
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );
