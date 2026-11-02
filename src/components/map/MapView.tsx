@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Map as MapLibreMap, Marker as MapLibreMarker, NavigationControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getDefaultTileStyle, type MapMarker } from "@/lib/maps/types";
+import { configureMapWorker } from "@/lib/maps/worker";
 import { placeCategoryStyle } from "@/lib/domain/place-category";
 
 // Thin wrapper around MapLibre GL. Only this file talks to the map SDK; the
@@ -33,6 +34,7 @@ export function MapView({
       console.error("Map tiles are not configured for this environment.");
       return;
     }
+    configureMapWorker();
     mapRef.current = new MapLibreMap({
       container: containerRef.current,
       style,

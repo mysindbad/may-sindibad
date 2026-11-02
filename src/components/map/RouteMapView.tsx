@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Map as MapLibreMap, Marker as MapLibreMarker, NavigationControl, LngLatBounds } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getDefaultTileStyle } from "@/lib/maps/types";
+import { configureMapWorker } from "@/lib/maps/worker";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { metresBetween, type RoutePoint } from "@/lib/navigation/route";
 
@@ -95,6 +96,7 @@ export function RouteMapView({
       return;
     }
 
+    configureMapWorker();
     const map = new MapLibreMap({
       container: containerRef.current,
       style,

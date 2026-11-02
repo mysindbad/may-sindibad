@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const parsed = uploadRequestSchema.safeParse({ ownerType, ownerId: ownerId || undefined });
     if (!parsed.success) return jsonError("Invalid upload target.", 422);
 
-    const targetOwnerId = await resolveAuthorizedUploadOwner(user.id, parsed.data.ownerType, parsed.data.ownerId);
+    const targetOwnerId = await resolveAuthorizedUploadOwner(user.id, parsed.data.ownerType, parsed.data.ownerId, user.role === "admin");
     if (!targetOwnerId) return jsonError("You don't have permission to upload media to this target.", 403);
 
     const validationError = validateUpload({ type: file.type, size: file.size });

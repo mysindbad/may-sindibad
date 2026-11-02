@@ -10,6 +10,8 @@ import { InlineAlert } from "@/components/ui/feedback";
 import { placeTrustLabel } from "@/components/places/trust";
 import type { PlaceCardData } from "@/components/places/PlaceCard";
 import { buildLoginPath } from "@/lib/auth/return-path";
+import { placeCategoryStyle } from "@/lib/domain/place-category";
+import { PlaceImage } from "@/components/places/PlaceImage";
 
 interface ReviewRow {
   id: string;
@@ -108,7 +110,22 @@ export function PlaceDetail({ place, reviews }: { place: PlaceCardData & { addre
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <div aria-hidden="true" className="flex h-40 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-800 to-sky-500 text-5xl text-white">📍</div>
+      {/* The real photo when there is one; otherwise the category's icon block, which is plainly decorative rather than a stand-in photo. */}
+      <div className="overflow-hidden rounded-2xl">
+        <PlaceImage
+          src={place.coverImageUrl}
+          priority
+          className="h-52 w-full object-cover md:h-64"
+          fallback={
+            <div
+              aria-hidden="true"
+              className={`flex h-40 items-center justify-center bg-gradient-to-br ${placeCategoryStyle(place.category, place.name).gradient} text-5xl text-white`}
+            >
+              {placeCategoryStyle(place.category, place.name).icon}
+            </div>
+          }
+        />
+      </div>
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-brand-950 dark:text-sand-50">{place.name}</h1>

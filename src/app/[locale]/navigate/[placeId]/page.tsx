@@ -14,7 +14,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale: rawLocale, placeId } = await params;
   if (!isLocale(rawLocale)) return {};
   const dict = await getDictionary(rawLocale);
-  const [place] = await db.select({ name: places.name }).from(places).where(eq(places.id, placeId)).limit(1);
+  // Approved places only: a draft or archived place must not leak its name through the page title.
+  const [place] = await db
+    .select({ name: places.name })
+    .from(places)
+    .where(and(eq(places.id, placeId), eq(places.status, "approved")))
+    .limit(1);
   return { title: place ? place.name + " · " + dict.navigation.title : dict.navigation.title };
 }
 

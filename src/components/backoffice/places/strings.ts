@@ -1,0 +1,135 @@
+// Control-room copy for place management. The control room is Arabic-only by
+// design (its layout always loads the "ar" dictionary), so these strings live
+// beside the feature instead of being duplicated across all six locales.
+
+export const placeText = {
+  addPlace: "إضافة مكان",
+  newPlaceTitle: "مكان جديد",
+  editPlaceTitle: "تعديل المكان",
+  backToList: "العودة إلى الأماكن",
+  edit: "تعديل",
+  viewInApp: "عرض في التطبيق",
+
+  statusDraft: "مسودة",
+  statusPublished: "منشور",
+  statusArchived: "مؤرشف",
+  statusReview: "قيد المراجعة",
+
+  tabPublished: "المنشورة",
+  tabDrafts: "المسودات",
+  tabReview: "قيد المراجعة",
+  tabArchived: "المؤرشفة",
+  allCategories: "كل الفئات",
+  noImage: "بدون صورة",
+  noPlaces: "لا توجد أماكن في هذا القسم.",
+  filteredNone: "لا توجد أماكن مطابقة للبحث أو الفئة.",
+  searchPlaceholder: "ابحث باسم المكان أو المدينة",
+
+  sectionBasics: "الأساسيات",
+  name: "اسم المكان",
+  category: "الفئة",
+  chooseCategory: "اختر الفئة",
+  description: "الوصف",
+  descriptionHint: "جملتان أو ثلاث تفيد المسافر: ما الذي يميّز المكان وماذا يتوقع هناك.",
+  price: "مستوى السعر",
+  priceNone: "غير محدد",
+
+  sectionLocation: "الموقع",
+  city: "المدينة",
+  country: "الدولة",
+  address: "العنوان (اختياري)",
+  pasteLabel: "رابط الموقع على الخرائط أو الإحداثيات",
+  pasteHint: "الصق رابط Google Maps أو OpenStreetMap، أو اكتب: خط العرض، خط الطول. اختياري إن أدخلت الإحداثيات يدويًا.",
+  extract: "استخراج الموقع",
+  extracting: "جارٍ القراءة…",
+  lat: "خط العرض",
+  lng: "خط الطول",
+  pinHint: "اسحب الدبوس أو اضغط على الخريطة لضبط الموقع بدقة.",
+  mapUnavailable: "الخريطة غير مفعّلة في هذه البيئة. تحقق من الإحداثيات بفتحها على OpenStreetMap:",
+  openOsm: "فتح على OpenStreetMap",
+  noCoordinatesYet: "أدخل الإحداثيات أو الصق رابطًا لعرض الموقع على الخريطة.",
+  precisionPin: "أُخذ موقع الدبوس من الرابط. تأكد أنه يطابق المكان الفعلي.",
+  precisionViewport: "الرابط يحدد مركز الخريطة وليس بالضرورة موقع المكان نفسه. حرّك الدبوس إلى المكان الصحيح ثم أكّد.",
+  confirmLocation: "تحققت أن الدبوس يطابق موقع المكان الفعلي",
+  confirmRequired: "أكّد موقع الدبوس قبل الحفظ.",
+
+  sectionImages: "صورة الغلاف",
+  imageHint: "صورة حقيقية للمكان (JPEG أو PNG أو WEBP حتى 5 ميغابايت). بدونها تظهر أيقونة بديلة للفئة.",
+  upload: "رفع صورة",
+  uploading: "جارٍ الرفع…",
+  uploadNeedsSave: "احفظ المكان كمسودة أولًا لتفعيل رفع الصورة، أو استخدم رابط صورة.",
+  uploadUnavailable: "رفع الصور غير مفعّل في هذه البيئة (التخزين غير مضبوط). استخدم رابط صورة بدلًا من ذلك.",
+  orUrl: "أو رابط صورة (https)",
+  verifyImage: "تحقق من الصورة",
+  verifying: "جارٍ الفحص…",
+  imageVerified: "الصورة سليمة ويمكن حفظها.",
+  removeImage: "إزالة الصورة",
+  imageLoadFailed: "تعذّر عرض الصورة في المتصفح.",
+  uploaded: "رُفعت الصورة وربطت بالمكان.",
+
+  saveDraft: "حفظ كمسودة",
+  saveChanges: "حفظ التعديلات",
+  publish: "نشر",
+  publishChanges: "حفظ ونشر",
+  archive: "أرشفة",
+  restore: "استعادة كمسودة",
+  unpublish: "إلغاء النشر (مسودة)",
+  preview: "معاينة",
+  hidePreview: "إخفاء المعاينة",
+  saving: "جارٍ الحفظ…",
+  saved: "تم الحفظ.",
+  savedPublished: "تم النشر. المكان ظاهر الآن للمسافرين.",
+  savedArchived: "تمت الأرشفة. المكان مخفي لكنه محفوظ مع تقييماته.",
+  confirmArchive: "سيختفي المكان من التطبيق والبحث والخريطة، وتبقى بياناته. المتابعة؟",
+  previewNote: "هذه معاينة لما سيراه المسافر. لن تُنشر إلا بالضغط على «نشر».",
+  previewViewport: "بطاقة الاكتشاف",
+
+  draftExplain: "المسودة غير ظاهرة للمسافرين.",
+  publishedExplain: "هذا المكان ظاهر للمسافرين في الاكتشاف والبحث والخريطة.",
+  archivedExplain: "هذا المكان مؤرشف ومخفي عن المسافرين.",
+  reviewExplain: "هذا المكان قيد المراجعة بعد بلاغ ولا يظهر للمسافرين.",
+
+  fixName: "أدخل اسم المكان (حرفان على الأقل).",
+  fixCity: "أدخل المدينة.",
+  fixCountry: "أدخل الدولة.",
+  fixCoordinates: "أدخل إحداثيات صحيحة (خط العرض بين -90 و90، وخط الطول بين -180 و180، وليست 0,0).",
+  fixDescriptionLength: "الوصف طويل جدًا (الحد 4000 حرف).",
+  networkError: "تعذّر الاتصال بالخادم. حاول مرة أخرى.",
+  unexpectedError: "حدث خطأ غير متوقع.",
+  sessionExpired: "انتهت الجلسة. سجّل الدخول مجددًا.",
+  forbidden: "لا تملك صلاحية تنفيذ هذا الإجراء.",
+  duplicateFound: "يوجد مكان بنفس الاسم في هذه المنطقة:",
+  createAnyway: "إنشاء رغم ذلك",
+  notCompleteToPublish: "لا يمكن النشر قبل استكمال:",
+} as const;
+
+export const blockerLabel: Record<string, string> = {
+  name: "الاسم",
+  city: "المدينة",
+  country: "الدولة",
+  category: "الفئة",
+  coordinates: "الموقع على الخريطة",
+};
+
+export const locateReason: Record<string, string> = {
+  empty: "الصق رابطًا أو اكتب الإحداثيات أولًا.",
+  unsupported_url: "هذا الرابط ليس من خرائط Google أو OpenStreetMap ولا يمكن قراءته.",
+  no_coordinates:
+    "الرابط لا يحتوي إحداثيات دقيقة (مثل رابط بحث باسم المكان). افتح المكان في الخرائط وانسخ رابط الموقع المحدد أو الإحداثيات.",
+  out_of_range: "الإحداثيات خارج النطاق الصحيح.",
+  null_island: "الإحداثيات 0,0 ليست موقعًا حقيقيًا.",
+  short_link: "الرابط المختصر لم يُفتح. الصق الرابط الكامل أو الإحداثيات.",
+  short_link_unresolved: "تعذّر فتح الرابط المختصر. الصق الرابط الكامل من الخرائط أو اكتب الإحداثيات.",
+};
+
+export const imageReason: Record<string, string> = {
+  invalid_url: "رابط الصورة غير صالح. يجب أن يبدأ بـ https://",
+  blocked_host: "عنوان هذه الصورة غير مسموح به.",
+  unreachable: "تعذّر فتح الصورة من هذا الرابط.",
+  too_many_redirects: "الرابط يحوّل إلى عناوين كثيرة.",
+  not_image: "الرابط لا يشير إلى صورة JPEG أو PNG أو WEBP.",
+  too_large: "حجم الصورة أكبر من 5 ميغابايت.",
+  bad_signature: "محتوى الملف لا يطابق نوع الصورة.",
+};
+
+export const priceLabels = ["غير محدد", "$ اقتصادي", "$$ متوسط", "$$$ مرتفع", "$$$$ فاخر"] as const;

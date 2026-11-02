@@ -6,6 +6,7 @@ import { Badge, Button, Card } from "@/components/ui/primitives";
 import type { PlaceCardData } from "@/components/places/PlaceCard";
 import { placeTrustLabel } from "@/components/places/trust";
 import { AddToTripButton } from "@/components/trips/AddToTripButton";
+import { PlaceImage } from "@/components/places/PlaceImage";
 
 // Tapping a marker used to jump straight out of the map to a detail page,
 // which lost the map context entirely. This card keeps the traveller on the
@@ -16,7 +17,8 @@ export function MapPlaceCard({ place, onClose }: { place: PlaceCardData; onClose
   return (
     <Card className="pointer-events-auto w-full max-w-md p-3 shadow-[var(--shadow-elevated)]">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <PlaceImage src={place.coverImageUrl} className="h-14 w-14 shrink-0 rounded-xl object-cover" fallback={null} />
+        <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold text-brand-950 dark:text-sand-50">{place.name}</h3>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">
             {place.city}, {place.country}

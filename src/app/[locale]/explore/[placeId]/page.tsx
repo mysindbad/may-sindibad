@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { places, reviews, users } from "@/db/schema";
+import { placeCategories, places, reviews, users } from "@/db/schema";
 import { PlaceDetail } from "@/components/explore/PlaceDetail";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,10 @@ export default async function PlaceDetailPage({ params }: { params: Promise<{ pl
 
   const [place] = await db.select().from(places).where(eq(places.id, placeId)).limit(1);
   if (!place || place.status !== "approved") notFound();
+
+  const [categoryRow] = place.categoryId
+    ? await db.select({ slug: placeCategories.slug }).from(placeCategories).where(eq(placeCategories.id, place.categoryId)).limit(1)
+    : [];
 
   const placeReviews = await db
     .select({ id: reviews.id, rating: reviews.rating, comment: reviews.comment, createdAt: reviews.createdAt, userName: users.name })
@@ -35,6 +39,8 @@ export default async function PlaceDetailPage({ params }: { params: Promise<{ pl
         ratingAverage: place.ratingAverage,
         ratingCount: place.ratingCount,
         sourceType: place.sourceType,
+        coverImageUrl: place.coverImageUrl,
+        category: categoryRow?.slug ?? null,
       }}
       reviews={placeReviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }))}
     />

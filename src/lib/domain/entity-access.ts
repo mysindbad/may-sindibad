@@ -7,7 +7,12 @@ export type UploadOwnerType = "place" | "provider" | "review" | "contribution" |
 export type ReportTargetType = "place" | "provider" | "review" | "contribution" | "user" | "community_post";
 export type FavoriteTargetType = "place" | "provider";
 
-export async function resolveAuthorizedUploadOwner(userId: string, ownerType: UploadOwnerType, ownerId?: string): Promise<string | null> {
+export async function resolveAuthorizedUploadOwner(
+  userId: string,
+  ownerType: UploadOwnerType,
+  ownerId?: string,
+  isAdmin = false,
+): Promise<string | null> {
   if (ownerType === "avatar") {
     if (ownerId && ownerId !== userId) return null;
     return userId;
@@ -56,6 +61,9 @@ export async function resolveAuthorizedUploadOwner(userId: string, ownerType: Up
     .where(eq(places.id, ownerId))
     .limit(1);
   if (!place) return null;
+  // The control room edits places it did not create (seeded, community,
+  // provider ones), so an administrator may attach media to any existing place.
+  if (isAdmin) return place.id;
   if (place.createdByUserId === userId) return place.id;
   if (place.providerId) {
     const [provider] = await db

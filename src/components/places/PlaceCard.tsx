@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge, Card } from "@/components/ui/primitives";
 import { placeCategoryStyle } from "@/lib/domain/place-category";
+import { PlaceImage } from "@/components/places/PlaceImage";
 
 export interface PlaceCardData {
   id: string;
@@ -30,16 +31,17 @@ export function PlaceCard({ place, locale, trustLabel }: { place: PlaceCardData;
   return (
     <Link href={`/${locale}/explore/${place.id}`} className="block">
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-[var(--shadow-elevated)]">
-        {place.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- remote cover photos come from arbitrary provider/S3 hosts, not the local image loader's fixed domain list.
-          <img src={place.coverImageUrl} alt="" className="h-28 w-full object-cover" />
-        ) : (
-          <div className={`flex h-28 items-center justify-center bg-gradient-to-br ${category.gradient}`}>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 text-2xl backdrop-blur-sm">
-              {category.icon}
-            </span>
-          </div>
-        )}
+        <PlaceImage
+          src={place.coverImageUrl}
+          className="h-28 w-full object-cover"
+          fallback={
+            <div className={`flex h-28 items-center justify-center bg-gradient-to-br ${category.gradient}`}>
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 text-2xl backdrop-blur-sm">
+                {category.icon}
+              </span>
+            </div>
+          }
+        />
         <div className="space-y-1.5 p-3.5">
           <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-brand-950 dark:text-sand-50">{place.name}</h3>
           <div className="flex items-center justify-between gap-2">

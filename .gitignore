@@ -5,6 +5,7 @@ node_modules/
 !.env.example
 coverage/
 public/uploads/
+public/maplibre-gl-worker.mjs
 *.log
 .DS_Store
 next-env.d.ts
