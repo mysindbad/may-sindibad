@@ -439,6 +439,8 @@ const de = {
     mapUnavailable: "Die Karte ist derzeit nicht verfügbar.",
     privacyNotice: "Zum Zeichnen der Route werden deine Position (auf etwa 10 m gerundet) und das Ziel an einen Routing-Dienst gesendet. My Sindbad speichert deine Position nicht; der Dienst kann eigene Anfrageprotokolle führen.",
     routingDisabled: "Die Routenberechnung ist in dieser Umgebung noch nicht aktiviert. Du kannst eine andere Karten-App öffnen.",
+    routingPaused: "Die Routenberechnung ist vorübergehend pausiert. Du kannst eine andere Karten-App öffnen.",
+    tooFarToRoute: "Dieses Ziel ist zu weit für eine Route in der App. Öffne eine andere Karten-App.",
   },
   categories: {
     breakfast: "Frühstück",

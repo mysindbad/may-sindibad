@@ -76,6 +76,38 @@ export function resolveRoutingEndpoint(mode: TravelMode, env: Record<string, str
   return PUBLIC_EXPERIMENTAL[mode];
 }
 
+// ---------------------------------------------------------------------------
+// Which PROVIDER answers: Geoapify (keyed, free plan with budget guards) or an
+// OSRM-compatible server (self-hosted, or the community instance behind the
+// production gate below). There is deliberately NO automatic fallback from one
+// to the other: a traveller's position goes only to the provider the owner
+// chose, and a failure is reported honestly instead of being retried
+// somewhere the owner did not approve.
+//
+//   ROUTING_PROVIDER   "geoapify" | "osrm"   (unset: Geoapify if GEOAPIFY_API_KEY is set, else osrm)
+//   GEOAPIFY_API_KEY   server-only secret; never sent to the browser or logged
+//   GEOAPIFY_BASE_URL  test override, honoured outside production only
+// ---------------------------------------------------------------------------
+
+export type ProviderSelection =
+  | { kind: "geoapify"; apiKey: string; baseUrl: string }
+  | { kind: "osrm" }
+  | { kind: "none" };
+
+export function selectRoutingProvider(env: Record<string, string | undefined> = process.env): ProviderSelection {
+  const requested = env.ROUTING_PROVIDER?.trim().toLowerCase();
+  const apiKey = env.GEOAPIFY_API_KEY?.trim() ?? "";
+
+  if (requested === "osrm") return { kind: "osrm" };
+  if (requested === "geoapify" || (!requested && apiKey)) {
+    if (!apiKey) return { kind: "none" }; // asked for Geoapify but no key: say so, do not quietly use another service
+    // A different base URL would send the key and positions elsewhere: only for local tests.
+    const override = env.NODE_ENV !== "production" ? env.GEOAPIFY_BASE_URL?.trim() : undefined;
+    return { kind: "geoapify", apiKey, baseUrl: override || "https://api.geoapify.com" };
+  }
+  return { kind: "osrm" };
+}
+
 /**
  * May the community routing service be used in this environment?
  * Outside production: yes (development and QA). In production: only when the

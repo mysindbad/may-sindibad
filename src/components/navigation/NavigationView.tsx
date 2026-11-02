@@ -308,6 +308,10 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         return dict.navigation.routeConfigError;
       case "provider_not_configured":
         return dict.navigation.routingDisabled;
+      case "routing_paused":
+        return dict.navigation.routingPaused;
+      case "too_far_to_route":
+        return dict.navigation.tooFarToRoute;
       default:
         return dict.navigation.routeUnavailable;
     }
@@ -378,7 +382,7 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
       {failure && !loading && (
         <Card className="space-y-2 p-3">
           <InlineAlert tone="warning">{stale ? dict.navigation.routeStale : failureMessage(failure.code)}</InlineAlert>
-          {!stale && failure.code !== "offline" && failure.code !== "provider_not_configured" && (
+          {!stale && failure.code !== "offline" && failure.code !== "provider_not_configured" && failure.code !== "routing_paused" && failure.code !== "too_far_to_route" && (
             <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.routeUnavailableBody}</p>
           )}
           <div className="flex flex-wrap gap-2">
@@ -444,7 +448,18 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
           )}
           {plan.durationBasis === "pace" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.paceNote}</p>}
           {plan.provider === "public-experimental" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.publicRouterNotice}</p>}
-          <p className="text-[11px] text-slate-400">{dict.navigation.routeCredit}</p>
+          {/* Attribution the providers' terms require: OpenStreetMap for the road data, and Geoapify when it supplied the route. */}
+          <p className="text-[11px] text-slate-400">
+            {dict.navigation.routeCredit}
+            {plan.provider === "geoapify" && (
+              <>
+                {" · "}
+                <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer" className="underline">
+                  Powered by Geoapify
+                </a>
+              </>
+            )}
+          </p>
         </Card>
       )}
 
