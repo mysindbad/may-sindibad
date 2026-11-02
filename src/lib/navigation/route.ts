@@ -31,7 +31,7 @@ export interface RoutePlan {
   /** How far the drawn line ends from the destination pin. */
   destinationOffsetMeters: number;
   /** Which routing configuration produced this plan, for attribution. */
-  provider: "configured" | "public-experimental";
+  provider: "configured" | "public-experimental" | "geoapify";
 }
 
 export type DirectionsFailureCode =
@@ -40,6 +40,8 @@ export type DirectionsFailureCode =
   | "too_far_for_walking"
   | "profile_mismatch"
   | "provider_not_configured"
+  | "routing_paused"
+  | "too_far_to_route"
   | "invalid_request";
 
 /** Pace used only to re-derive a walking time when an engine's own time is not credible. */

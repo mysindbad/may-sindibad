@@ -439,6 +439,8 @@ const fr = {
     mapUnavailable: "La carte n'est pas disponible pour le moment.",
     privacyNotice: "Pour tracer l'itinéraire, votre position (arrondie à environ 10 m) et la destination sont envoyées à un service d'itinéraires. My Sindbad ne conserve pas votre position ; le service peut garder ses propres journaux de requêtes.",
     routingDisabled: "Le calcul d'itinéraire n'est pas encore activé dans cet environnement. Vous pouvez ouvrir une autre application de cartes.",
+    routingPaused: "Le calcul d'itinéraire est momentanément suspendu. Vous pouvez ouvrir une autre application de cartes.",
+    tooFarToRoute: "Cette destination est trop éloignée pour un itinéraire dans l'application. Ouvrez une autre application de cartes.",
   },
   categories: {
     breakfast: "Petit-déjeuner",

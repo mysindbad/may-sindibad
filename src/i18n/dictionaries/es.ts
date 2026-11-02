@@ -439,6 +439,8 @@ const es = {
     mapUnavailable: "El mapa no está disponible en este momento.",
     privacyNotice: "Para trazar la ruta, tu posición (redondeada a unos 10 m) y el destino se envían a un servicio de rutas. My Sindbad no guarda tu posición; el servicio puede conservar sus propios registros de solicitudes.",
     routingDisabled: "Las indicaciones de ruta aún no están activadas en este entorno. Puedes abrir otra aplicación de mapas.",
+    routingPaused: "Las indicaciones de ruta están en pausa por ahora. Puedes abrir otra aplicación de mapas.",
+    tooFarToRoute: "Este destino está demasiado lejos para trazar la ruta en la aplicación. Abre otra aplicación de mapas.",
   },
   categories: {
     breakfast: "Desayuno",

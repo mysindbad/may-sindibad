@@ -2,20 +2,38 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { zodErrorResponse } from "@/lib/api-utils";
 import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
-import { parseJsonResponseWithLimit } from "@/lib/http/bounded-body";
+import { parseJsonResponseWithLimit, parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
+import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
 import {
   MAX_WALKING_STRAIGHT_METRES,
   isTravelMode,
   metresBetween,
   type DirectionsFailureCode,
   type LatLng,
+  type RoutePlan,
   type TravelMode,
 } from "@/lib/navigation/route";
 import { parseOsrmRoute, type OsrmResponse } from "@/lib/navigation/osrm";
-import { buildOsrmUrl, coarsenForProvider, publicRouterAllowed, resolveRoutingEndpoint, type RoutingEndpoint } from "@/lib/navigation/providers";
+import {
+  buildOsrmUrl,
+  coarsenForProvider,
+  publicRouterAllowed,
+  resolveRoutingEndpoint,
+  selectRoutingProvider,
+  type RoutingEndpoint,
+} from "@/lib/navigation/providers";
 import { publicRouterSpacer } from "@/lib/navigation/spacer";
-import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
-import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
+import { extraCreditsForDistance } from "@/lib/navigation/geoapify";
+import { fetchGeoapifyRoute, type GeoapifyOutcome } from "@/lib/navigation/geoapify-client";
+import {
+  createBreaker,
+  createBudget,
+  createRouteCache,
+  killSwitchOn,
+  readBudgetConfig,
+  routeCacheKey,
+  type CounterStore,
+} from "@/lib/navigation/budget";
 
 // Directions for the in-app navigation screen.
 //
@@ -25,12 +43,14 @@ import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
 // distance or ETA. On failure it still reports the measured straight-line
 // distance (clearly a different quantity) so the screen can stay useful.
 //
-// Provider choice, limits and licence notes: src/lib/navigation/providers.ts.
+// Provider choice, limits and licence notes: src/lib/navigation/providers.ts
+// (which provider) and src/lib/navigation/budget.ts (free-plan protection).
 //
 // Privacy: the traveller's position is personal data. It is rounded to ~10 m
 // before it leaves for a routing provider, never written to our logs, and the
 // app sends it in a POST body (a GET puts coordinates in the URL, which
-// platform HTTP logs record). GET is kept for diagnostics only.
+// platform HTTP logs record). GET is kept for diagnostics only. The browser
+// never talks to a routing provider and never sees a provider key.
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +65,29 @@ const querySchema = z.object({
 const OSRM_TIMEOUT_MS = 6000;
 const MAX_ROUTE_BYTES = 1024 * 1024;
 
-type FetchOutcome = { kind: "payload"; payload: OsrmResponse } | { kind: "failed"; retryable: boolean };
+// Process-level state. The shared, restart-proof part (the credit budget) lives
+// in PostgreSQL; these only make this process cheaper and calmer.
+const breaker = createBreaker();
+const routeCache = createRouteCache<RoutePlan>({ ttlMs: 90_000, maxEntries: 200 });
+const inFlight = new Map<string, Promise<GeoapifyOutcome>>();
 
-async function askOsrm(endpoint: RoutingEndpoint, from: LatLng, to: LatLng): Promise<FetchOutcome> {
+const budgetStore: CounterStore = {
+  async hit(key, limit, windowMs) {
+    const result = await checkRateLimit(key, limit, windowMs);
+    return { allowed: result.allowed };
+  },
+};
+
+function maxGeoapifyRouteMetres(env: Record<string, string | undefined> = process.env): number {
+  const km = Number(env.GEOAPIFY_MAX_ROUTE_KM);
+  // Under 500 km a route is one credit; above it each further 500 km costs one more.
+  const bounded = Number.isFinite(km) && km > 0 ? Math.min(km, 450) : 300;
+  return bounded * 1000;
+}
+
+type OsrmOutcome = { kind: "payload"; payload: OsrmResponse } | { kind: "failed"; retryable: boolean };
+
+async function askOsrm(endpoint: RoutingEndpoint, from: LatLng, to: LatLng): Promise<OsrmOutcome> {
   // The community router allows 1 request/second for everyone: wait for a
   // slot, or fail honestly rather than breach it.
   if (endpoint.kind === "public-experimental" && !(await publicRouterSpacer.take())) {
@@ -76,28 +116,67 @@ function failure(code: DirectionsFailureCode, status: number, straightLineMeters
   return NextResponse.json({ error: code, retryable, straightLineMeters: Math.round(straightLineMeters) }, { status });
 }
 
-async function respond(request: Request, input: Record<string, unknown>) {
-  const rate = await checkRateLimit(clientKeyFromRequest(request, "navigation-directions"), 120, 10 * 60 * 1000);
-  if (!rate.allowed) return NextResponse.json({ error: "Too many route requests. Please slow down." }, { status: 429 });
+async function respondGeoapify(
+  request: Request,
+  config: { apiKey: string; baseUrl: string },
+  from: LatLng,
+  to: LatLng,
+  mode: TravelMode,
+  straight: number,
+) {
+  // 1. A route longer than the cap costs extra credits and is not a "take me
+  //    there" in the app anyway.
+  if (straight > maxGeoapifyRouteMetres()) return failure("too_far_to_route", 422, straight, false);
 
-  const parsed = querySchema.safeParse(input);
-  if (!parsed.success) return zodErrorResponse(parsed.error);
+  // 2. Identical recent route: free.
+  const cacheKey = routeCacheKey(from, to, mode);
+  const cached = routeCache.get(cacheKey);
+  if (cached) return NextResponse.json({ route: cached });
 
-  const requestedMode = parsed.data.mode;
-  if (requestedMode !== undefined && !isTravelMode(requestedMode)) {
-    return failure("invalid_request", 400, 0, false);
+  // 3. The provider recently refused us (limit reached / key rejected / failing):
+  //    do not ask again until the breaker closes.
+  const open = breaker.status();
+  if (open) {
+    if (open.reason === "auth") return failure("provider_not_configured", 503, straight, false);
+    if (open.reason === "limit") return failure("routing_paused", 503, straight, false);
+    return failure("route_unavailable", 503, straight, true);
   }
-  const mode: TravelMode = requestedMode ?? "walking";
-  const to = { lat: parsed.data.toLat, lng: parsed.data.toLng };
-  // The traveller's position is rounded (~10 m) before it goes anywhere. The
-  // destination is a public place pin and is sent as stored.
-  const from = coarsenForProvider({ lat: parsed.data.fromLat, lng: parsed.data.fromLng });
-  const straight = metresBetween(from, to);
 
-  if (mode === "walking" && straight > MAX_WALKING_STRAIGHT_METRES) {
-    return failure("too_far_for_walking", 422, straight, false);
+  // 4. One person cannot spend the day's credits.
+  const mine = await checkRateLimit(clientKeyFromRequest(request, "navigation-geoapify"), 30, 30 * 60 * 1000);
+  if (!mine.allowed) return failure("route_unavailable", 429, straight, true);
+
+  // 5. Share one provider call between identical simultaneous requests.
+  let pending = inFlight.get(cacheKey);
+  if (!pending) {
+    pending = (async (): Promise<GeoapifyOutcome> => {
+      // 5a. Persistent, shared budget. Refuse (fail closed) unless it can be proven.
+      const decision = await createBudget(budgetStore, readBudgetConfig()).reserve();
+      if (decision === "daily_exhausted") return { kind: "failure", code: "routing_paused", retryable: false, trip: "none" };
+      if (decision !== "ok") return { kind: "failure", code: "route_unavailable", retryable: true, trip: "none" };
+      return fetchGeoapifyRoute(config, from, to, mode);
+    })().finally(() => inFlight.delete(cacheKey));
+    inFlight.set(cacheKey, pending);
+  }
+  const outcome = await pending;
+
+  if (outcome.kind === "route") {
+    breaker.recordSuccess();
+    routeCache.set(cacheKey, outcome.plan);
+    const extra = extraCreditsForDistance(outcome.plan.distanceMeters);
+    if (extra > 0) await createBudget(budgetStore, readBudgetConfig()).settleExtra(extra);
+    return NextResponse.json({ route: outcome.plan });
   }
 
+  if (outcome.trip === "auth") breaker.tripAuth();
+  else if (outcome.trip === "limit") breaker.tripLimit();
+  else if (outcome.trip === "transient") breaker.recordFailure();
+
+  const status = outcome.code === "no_route_nearby" ? 422 : 503;
+  return failure(outcome.code, status, straight, outcome.retryable);
+}
+
+async function respondOsrm(from: LatLng, to: LatLng, mode: TravelMode, straight: number) {
   const endpoint = resolveRoutingEndpoint(mode);
 
   // Production never falls back to the community router unless the owner has
@@ -123,6 +202,37 @@ async function respond(request: Request, input: Record<string, unknown>) {
   }
 
   return NextResponse.json({ route: result.plan });
+}
+
+async function respond(request: Request, input: Record<string, unknown>) {
+  const rate = await checkRateLimit(clientKeyFromRequest(request, "navigation-directions"), 120, 10 * 60 * 1000);
+  if (!rate.allowed) return failure("route_unavailable", 429, 0, true);
+
+  const parsed = querySchema.safeParse(input);
+  if (!parsed.success) return zodErrorResponse(parsed.error);
+
+  const requestedMode = parsed.data.mode;
+  if (requestedMode !== undefined && !isTravelMode(requestedMode)) {
+    return failure("invalid_request", 400, 0, false);
+  }
+  const mode: TravelMode = requestedMode ?? "walking";
+  const to = { lat: parsed.data.toLat, lng: parsed.data.toLng };
+  // The traveller's position is rounded (~10 m) before it goes anywhere. The
+  // destination is a public place pin and is sent as stored.
+  const from = coarsenForProvider({ lat: parsed.data.fromLat, lng: parsed.data.fromLng });
+  const straight = metresBetween(from, to);
+
+  if (mode === "walking" && straight > MAX_WALKING_STRAIGHT_METRES) {
+    return failure("too_far_for_walking", 422, straight, false);
+  }
+
+  // Owner's emergency stop: nothing leaves the server, whatever the provider.
+  if (killSwitchOn()) return failure("routing_paused", 503, straight, false);
+
+  const selection = selectRoutingProvider();
+  if (selection.kind === "none") return failure("provider_not_configured", 503, straight, false);
+  if (selection.kind === "geoapify") return respondGeoapify(request, selection, from, to, mode, straight);
+  return respondOsrm(from, to, mode, straight);
 }
 
 // The app calls this: coordinates travel in the body, not the URL.

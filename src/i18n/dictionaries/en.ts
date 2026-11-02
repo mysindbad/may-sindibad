@@ -436,6 +436,8 @@ const en = {
     mapUnavailable: "The map is not available right now.",
     privacyNotice: "To draw the route, your position (rounded to about 10 m) and the destination are sent to a routing service. My Sindbad does not save your position; the service may keep its own request logs.",
     routingDisabled: "Route directions are not enabled in this environment yet. You can open another maps app.",
+    routingPaused: "Route directions are paused for now. You can open another maps app.",
+    tooFarToRoute: "This destination is too far to route in the app. Open another maps app.",
   },
   categories: {
     breakfast: "Breakfast",
