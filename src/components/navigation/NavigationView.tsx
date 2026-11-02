@@ -8,10 +8,16 @@ import { localeNames } from "@/i18n/config";
 import { Badge, Button, Card } from "@/components/ui/primitives";
 import { InlineAlert, Skeleton } from "@/components/ui/feedback";
 import {
+  canRouteFromFix,
+  classifyGeolocationError,
+  progressRatio,
+  readDirect,
   readGuardian,
   remainingSeconds,
-  progressRatio,
+  routeMetresRemaining,
   type CompassPoint,
+  type DirectionsFailureCode,
+  type GeolocationFailure,
   type LatLng,
   type RoutePlan,
   type TravelMode,
@@ -35,6 +41,8 @@ export interface NavigationPlace {
 /** Do not hammer the routing service when the traveller wanders near the edge. */
 const REROUTE_COOLDOWN_MS = 20000;
 
+type RouteFailure = { code: DirectionsFailureCode | "network" | "offline"; retryable: boolean };
+
 export function NavigationView({ place }: { place: NavigationPlace }) {
   const { dict, locale } = useLocale();
   const destination: LatLng = { lat: place.lat, lng: place.lng };
@@ -42,8 +50,10 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
   const [mode, setMode] = useState<TravelMode>("walking");
   const [position, setPosition] = useState<LatLng | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [locationError, setLocationError] = useState(false);
+  const [locationFailure, setLocationFailure] = useState<GeolocationFailure | null>(null);
   const [plan, setPlan] = useState<RoutePlan | null>(null);
+  const [failure, setFailure] = useState<RouteFailure | null>(null);
+  const [loading, setLoading] = useState(false);
   const [follow, setFollow] = useState(true);
   const [aiReply, setAiReply] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
@@ -51,10 +61,16 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
 
   const lastRouteAtRef = useRef(0);
   const positionRef = useRef<LatLng | null>(null);
+  const planRef = useRef<RoutePlan | null>(null);
+  // Only the newest request may write state: a slow walking answer must never
+  // overwrite the driving route the traveller switched to meanwhile.
+  const requestIdRef = useRef(0);
 
   const loadRoute = useCallback(
     async (from: LatLng, travelMode: TravelMode) => {
       lastRouteAtRef.current = Date.now();
+      const requestId = ++requestIdRef.current;
+      setLoading(true);
       const params = new URLSearchParams({
         fromLat: String(from.lat),
         fromLng: String(from.lng),
@@ -64,47 +80,107 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
       });
       try {
         const res = await fetch("/api/navigation/directions?" + params.toString());
-        if (!res.ok) return;
-        const data = (await res.json()) as { route?: RoutePlan };
-        if (data.route) setPlan(data.route);
+        if (requestId !== requestIdRef.current) return;
+        if (res.ok) {
+          const data = (await res.json()) as { route?: RoutePlan };
+          if (requestId !== requestIdRef.current) return;
+          if (data.route && data.route.geometry.length >= 2) {
+            planRef.current = data.route;
+            setPlan(data.route);
+            setFailure(null);
+            return;
+          }
+          // A 200 without drawable geometry is a failure, never a blank success.
+          planRef.current = null;
+          setPlan(null);
+          setFailure({ code: "route_unavailable", retryable: true });
+          return;
+        }
+        const body = (await res.json().catch(() => ({}))) as { error?: DirectionsFailureCode; retryable?: boolean };
+        if (requestId !== requestIdRef.current) return;
+        const code = body.error ?? "route_unavailable";
+        // Only a transient failure may keep the previous route of the SAME
+        // mode on screen; anything definitive clears it.
+        const keep = code === "route_unavailable" && planRef.current?.mode === travelMode;
+        if (!keep) {
+          planRef.current = null;
+          setPlan(null);
+        }
+        setFailure({ code, retryable: body.retryable ?? code === "route_unavailable" });
       } catch {
-        // Losing a refresh is survivable: the previous route and the live
-        // distance readout both stay on screen.
+        if (requestId !== requestIdRef.current) return;
+        if (planRef.current?.mode !== travelMode) {
+          planRef.current = null;
+          setPlan(null);
+        }
+        setFailure({ code: typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "network", retryable: true });
+      } finally {
+        if (requestId === requestIdRef.current) setLoading(false);
       }
     },
     [destination.lat, destination.lng],
   );
 
   // Live position. watchPosition rather than a poll so the guardian reacts as
-  // soon as the device has a better fix.
+  // soon as the device has a better fix. A timeout keeps the watch alive: the
+  // browser will report again as soon as it gets a fix.
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setLocationError(true);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser capability is only knowable on the client, after mount.
+      setLocationFailure("unavailable");
       return;
     }
     const watchId = navigator.geolocation.watchPosition(
       (fix) => {
-        setLocationError(false);
+        setLocationFailure(null);
         const next = { lat: fix.coords.latitude, lng: fix.coords.longitude };
         positionRef.current = next;
         setPosition(next);
         setAccuracy(typeof fix.coords.accuracy === "number" ? fix.coords.accuracy : null);
       },
-      () => setLocationError(true),
+      (error) => setLocationFailure(classifyGeolocationError(error.code)),
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  const hasPosition = position !== null;
+  const usableFix = position !== null && canRouteFromFix(accuracy);
 
-  // First route as soon as a position exists, and again whenever the traveller
-  // switches between walking and driving.
+  // First route as soon as a usable position exists, and again whenever the
+  // traveller switches between walking and driving.
   useEffect(() => {
     const current = positionRef.current;
-    if (!current) return;
+    if (!current || !usableFix) return;
     void loadRoute(current, mode);
-  }, [mode, hasPosition, loadRoute]);
+  }, [mode, usableFix, loadRoute]);
+
+  function switchMode(next: TravelMode) {
+    if (next === mode) return;
+    // Drop the old line immediately so a driving route is never shown under
+    // the walking label (or the reverse) while the new one loads.
+    requestIdRef.current += 1;
+    planRef.current = null;
+    setPlan(null);
+    setFailure(null);
+    setLoading(false);
+    setMode(next);
+  }
+
+  function retry() {
+    const current = positionRef.current;
+    if (!current || !canRouteFromFix(accuracy)) return;
+    void loadRoute(current, mode);
+  }
+
+  // Coming back online is the cue to retry a route that failed for the network.
+  useEffect(() => {
+    function onOnline() {
+      const current = positionRef.current;
+      if (current && canRouteFromFix(accuracy) && !planRef.current) void loadRoute(current, mode);
+    }
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [accuracy, mode, loadRoute]);
 
   // Keep the screen awake while navigating; a locked screen mid-journey is the
   // most common way this kind of feature fails people.
@@ -129,6 +205,7 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
   }, []);
 
   const reading = position && plan ? readGuardian({ position, accuracyMetres: accuracy, destination, geometry: plan.geometry }) : null;
+  const direct = position && !plan ? readDirect(position, accuracy, destination) : null;
   const guardianState = reading ? reading.state : null;
 
   // Recalculate when the traveller genuinely leaves the route.
@@ -163,6 +240,15 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
     nw: dict.navigation.headingNW,
   };
 
+  // Distance to go along the road, measured on the drawn route (plus however
+  // far the traveller currently is from it), not the crow-flies distance.
+  const metresLeft =
+    reading && plan
+      ? reading.state === "arrived"
+        ? reading.metresRemaining
+        : Math.round(routeMetresRemaining(position as LatLng, plan.geometry) + reading.metresFromRoute)
+      : 0;
+
   async function askSindbad() {
     if (!plan || !reading) return;
     setAiBusy(true);
@@ -172,7 +258,7 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
       "I am already on my way to " + place.name + " in " + place.city + ", " + place.country +
       " right now, travelling by " + (mode === "walking" ? "foot" : "car") +
       ". This is live, in-progress navigation, not trip planning - do not suggest creating, adding to, or editing a trip in the app." +
-      " I am " + formatDistance(reading.metresRemaining) + " away, heading " + HEADING_LABEL[reading.heading] +
+      " I am " + formatDistance(metresLeft) + " away, heading " + HEADING_LABEL[reading.heading] +
       ". Give me a short, practical, real-time tip for the rest of this specific walk or drive: anything to watch out for right now on the way to this exact destination." +
       " Respond only in " + localeNames[locale] + ".";
     try {
@@ -212,11 +298,37 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
           ? dict.navigation.poorSignal
           : dict.navigation.onRoute;
 
-  const totalMetres = plan ? plan.distanceMeters : 0;
-  const done = reading ? progressRatio(totalMetres, reading.metresRemaining) : 0;
+  const failureMessage = (code: RouteFailure["code"]): string => {
+    switch (code) {
+      case "offline":
+        return dict.navigation.offline;
+      case "no_route_nearby":
+        return dict.navigation.noRouteNearby;
+      case "too_far_for_walking":
+        return dict.navigation.tooFarForWalking;
+      case "profile_mismatch":
+        return dict.navigation.routeConfigError;
+      default:
+        return dict.navigation.routeUnavailable;
+    }
+  };
+
+  const locationMessage =
+    locationFailure === "denied"
+      ? dict.navigation.locationDenied + " " + dict.navigation.enableLocation
+      : locationFailure === "unavailable"
+        ? dict.navigation.locationUnavailable
+        : locationFailure === "timeout"
+          ? dict.navigation.locationTimeout
+          : null;
+
+  const fixTooCoarse = position !== null && !canRouteFromFix(accuracy);
+  const fixApproximate = usableFix && accuracy !== null && accuracy > 60;
+  const done = plan && reading ? progressRatio(plan.distanceMeters, metresLeft) : 0;
+  const stale = failure !== null && plan !== null;
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-3xl flex-col gap-3 px-4 py-4 md:h-[calc(100dvh-64px)]">
+    <div className="mx-auto flex h-[calc(100dvh-136px)] max-w-3xl flex-col gap-3 overflow-y-auto px-4 py-4 md:h-[calc(100dvh-64px)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-brand-950 dark:text-sand-50">{place.name}</h1>
@@ -231,25 +343,25 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         </Link>
       </div>
 
-      <div className="flex gap-2">
-        <Button size="sm" variant={mode === "walking" ? "primary" : "secondary"} onClick={() => setMode("walking")}>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={mode === "walking" ? "primary" : "secondary"} aria-pressed={mode === "walking"} onClick={() => switchMode("walking")}>
           🚶 {dict.navigation.walking}
         </Button>
-        <Button size="sm" variant={mode === "driving" ? "primary" : "secondary"} onClick={() => setMode("driving")}>
+        <Button size="sm" variant={mode === "driving" ? "primary" : "secondary"} aria-pressed={mode === "driving"} onClick={() => switchMode("driving")}>
           🚗 {dict.navigation.driving}
         </Button>
-        <Button size="sm" variant={follow ? "primary" : "ghost"} onClick={() => setFollow(!follow)}>
+        <Button size="sm" variant={follow ? "primary" : "ghost"} aria-pressed={follow} onClick={() => setFollow(!follow)}>
           🎯 {dict.navigation.recenter}
         </Button>
       </div>
 
-      {locationError && (
-        <InlineAlert tone="warning">
-          {dict.navigation.locationDenied} {dict.navigation.enableLocation}
-        </InlineAlert>
-      )}
-
-      {!position && !locationError && <InlineAlert tone="info">{dict.navigation.locating}</InlineAlert>}
+      <div role="status" aria-live="polite" className="space-y-2 empty:hidden">
+        {locationMessage && <InlineAlert tone={locationFailure === "timeout" ? "info" : "warning"}>{locationMessage}</InlineAlert>}
+        {!position && !locationFailure && <InlineAlert tone="info">{dict.navigation.locating}</InlineAlert>}
+        {fixTooCoarse && <InlineAlert tone="warning">{dict.navigation.inaccurateLocation}</InlineAlert>}
+        {fixApproximate && !fixTooCoarse && <InlineAlert tone="info">{dict.navigation.approximateLocation}</InlineAlert>}
+        {usableFix && loading && <InlineAlert tone="info">{plan ? dict.navigation.recalculating : dict.navigation.calculating}</InlineAlert>}
+      </div>
 
       <div className="min-h-[240px] flex-1 overflow-hidden rounded-2xl">
         <RouteMapView
@@ -261,16 +373,50 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         />
       </div>
 
+      {failure && !loading && (
+        <Card className="space-y-2 p-3">
+          <InlineAlert tone="warning">{stale ? dict.navigation.routeStale : failureMessage(failure.code)}</InlineAlert>
+          {!stale && failure.code !== "offline" && <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.routeUnavailableBody}</p>}
+          <div className="flex flex-wrap gap-2">
+            {failure.retryable && usableFix && (
+              <Button size="sm" onClick={retry}>
+                {dict.navigation.retry}
+              </Button>
+            )}
+            <a href={externalMapsUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="secondary">
+                {dict.navigation.openExternal}
+              </Button>
+            </a>
+          </div>
+        </Card>
+      )}
+
+      {direct && !loading && (
+        <Card className="space-y-1 p-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.straightLine}</p>
+          <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDistance(direct.straightMetres)}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            {dict.navigation.heading}: <strong>{HEADING_LABEL[direct.heading]}</strong>
+          </p>
+          {direct.state === "arrived" ? (
+            <InlineAlert tone="success">{dict.navigation.arrived}</InlineAlert>
+          ) : (
+            <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.straightLineNote}</p>
+          )}
+        </Card>
+      )}
+
       {reading && plan && (
         <Card className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.remaining}</p>
-              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDistance(reading.metresRemaining)}</p>
+              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDistance(metresLeft)}</p>
             </div>
             <div className="text-end">
               <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.eta}</p>
-              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDuration(remainingSeconds(plan, reading.metresRemaining))}</p>
+              <p className="text-xl font-semibold text-brand-950 dark:text-sand-50">{formatDuration(remainingSeconds(plan, metresLeft))}</p>
             </div>
           </div>
 
@@ -282,12 +428,19 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
             <span>
               {dict.navigation.heading}: <strong>{HEADING_LABEL[reading.heading]}</strong>
             </span>
-            {plan.source === "estimate" && <Badge tone="sun">~</Badge>}
+            {plan.provider === "public-experimental" && <Badge tone="sun">β</Badge>}
           </div>
 
           <InlineAlert tone={guardianTone}>{guardianMessage}</InlineAlert>
           {guardianState === "arrived" && <p className="text-sm text-slate-600 dark:text-slate-400">{dict.navigation.arrivedBody}</p>}
-          {plan.source === "estimate" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.estimateNotice}</p>}
+          {plan.destinationOffsetMeters > 100 && (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {dict.navigation.routeEndsAway} {formatDistance(plan.destinationOffsetMeters)}
+            </p>
+          )}
+          {plan.durationBasis === "pace" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.paceNote}</p>}
+          {plan.provider === "public-experimental" && <p className="text-xs text-slate-500 dark:text-slate-400">{dict.navigation.publicRouterNotice}</p>}
+          <p className="text-[11px] text-slate-400">{dict.navigation.routeCredit}</p>
         </Card>
       )}
 

@@ -14,24 +14,59 @@ export interface LatLng {
 /** GeoJSON order: [longitude, latitude]. */
 export type RoutePoint = [number, number];
 
+/**
+ * A real road/path route from a routing engine. There is deliberately no
+ * "estimate" variant: when no engine answers, the API reports a failure
+ * instead of a straight line dressed up as a route.
+ */
 export interface RoutePlan {
   mode: TravelMode;
-  /** "routed" came from a routing engine; "estimate" is a straight-line fallback. */
-  source: "routed" | "estimate";
   distanceMeters: number;
   durationSeconds: number;
+  /** "provider" = the engine's own time; "pace" = derived from road distance at a fixed walking pace. */
+  durationBasis: "provider" | "pace";
   geometry: RoutePoint[];
+  /** How far the drawn line starts from the traveller's point, because engines snap to the nearest road. */
+  originOffsetMeters: number;
+  /** How far the drawn line ends from the destination pin. */
+  destinationOffsetMeters: number;
+  /** Which routing configuration produced this plan, for attribution. */
+  provider: "configured" | "public-experimental";
 }
 
-/**
- * Average speeds used when no routing engine answers. Deliberately
- * conservative: a traveller who arrives early is never harmed, one who
- * trusts an optimistic ETA and misses a booking is.
- */
+export type DirectionsFailureCode =
+  | "route_unavailable"
+  | "no_route_nearby"
+  | "too_far_for_walking"
+  | "profile_mismatch"
+  | "invalid_request";
+
+/** Pace used only to re-derive a walking time when an engine's own time is not credible. */
+export const WALKING_PACE_METRES_PER_SECOND = 1.25;
 const FALLBACK_SPEED_METRES_PER_SECOND: Record<TravelMode, number> = {
-  walking: 1.25,
+  walking: WALKING_PACE_METRES_PER_SECOND,
   driving: 8.5,
 };
+
+/** Beyond this straight-line distance a walking route is not offered at all. */
+export const MAX_WALKING_STRAIGHT_METRES = 30000;
+
+/** A fix coarser than this cannot anchor a route at all (cell-tower level). */
+export const UNUSABLE_ACCURACY_METRES = 1000;
+
+export type GeolocationFailure = "denied" | "unavailable" | "timeout";
+
+/** Maps GeolocationPositionError.code (1, 2, 3) to a stable name. */
+export function classifyGeolocationError(code: number): GeolocationFailure {
+  if (code === 1) return "denied";
+  if (code === 3) return "timeout";
+  return "unavailable";
+}
+
+/** Whether a position fix is precise enough to compute a route from. */
+export function canRouteFromFix(accuracyMetres: number | null): boolean {
+  return accuracyMetres === null || accuracyMetres <= UNUSABLE_ACCURACY_METRES;
+}
 
 /** Treat the traveller as arrived inside this radius; GPS is rarely better. */
 export const ARRIVAL_RADIUS_METRES = 45;
@@ -48,27 +83,6 @@ export function isTravelMode(value: string): value is TravelMode {
 
 export function metresBetween(a: LatLng, b: LatLng): number {
   return haversineKm(a, b) * 1000;
-}
-
-/**
- * Straight-line plan used when no routing engine is configured or reachable.
- * Real streets are never straight, so the distance is padded by a detour
- * factor rather than reported as if it were a road distance.
- */
-export function estimateRoute(from: LatLng, to: LatLng, mode: TravelMode): RoutePlan {
-  const straight = metresBetween(from, to);
-  const DETOUR_FACTOR = 1.3;
-  const distanceMeters = Math.round(straight * DETOUR_FACTOR);
-  return {
-    mode,
-    source: "estimate",
-    distanceMeters,
-    durationSeconds: Math.round(distanceMeters / FALLBACK_SPEED_METRES_PER_SECOND[mode]),
-    geometry: [
-      [from.lng, from.lat],
-      [to.lng, to.lat],
-    ],
-  };
 }
 
 /** Initial bearing from a to b, in degrees clockwise from north. */
@@ -98,7 +112,7 @@ export function compassPoint(bearing: number): CompassPoint {
  * centred on the point. Accurate well past the scale of a city street, which
  * is all the off-route check needs.
  */
-function metresToSegment(point: LatLng, start: LatLng, end: LatLng): number {
+function projectOnSegment(point: LatLng, start: LatLng, end: LatLng): { distance: number; t: number } {
   const toRad = Math.PI / 180;
   const metresPerDegreeLat = 111320;
   const metresPerDegreeLng = 111320 * Math.cos(point.lat * toRad);
@@ -109,7 +123,7 @@ function metresToSegment(point: LatLng, start: LatLng, end: LatLng): number {
   const sy = (end.lat - start.lat) * metresPerDegreeLat;
 
   const segmentLengthSquared = sx * sx + sy * sy;
-  if (segmentLengthSquared === 0) return Math.sqrt(px * px + py * py);
+  if (segmentLengthSquared === 0) return { distance: Math.sqrt(px * px + py * py), t: 0 };
 
   // Clamp keeps the projection inside the segment instead of running off the
   // infinite line, which would under-report distance near a turn.
@@ -118,7 +132,11 @@ function metresToSegment(point: LatLng, start: LatLng, end: LatLng): number {
 
   const dx = px - t * sx;
   const dy = py - t * sy;
-  return Math.sqrt(dx * dx + dy * dy);
+  return { distance: Math.sqrt(dx * dx + dy * dy), t };
+}
+
+function metresToSegment(point: LatLng, start: LatLng, end: LatLng): number {
+  return projectOnSegment(point, start, end).distance;
 }
 
 /** Shortest distance in metres from the traveller to the drawn route. */
@@ -181,6 +199,57 @@ export function readGuardian(input: GuardianInput): GuardianReading {
     bearingToDestination: Math.round(bearing),
     heading: compassPoint(bearing),
   };
+}
+
+/**
+ * Metres still to travel ALONG the drawn route from the traveller's closest
+ * point on it to its end. Unlike the straight-line distance to the pin this
+ * respects the road, so the remaining distance and ETA do not shrink while
+ * the traveller is walking away from the destination around a block.
+ */
+export function routeMetresRemaining(point: LatLng, geometry: RoutePoint[]): number {
+  if (geometry.length < 2) return Number.POSITIVE_INFINITY;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestIndex = 0;
+  let bestT = 0;
+  for (let i = 0; i < geometry.length - 1; i += 1) {
+    const start = { lat: geometry[i][1], lng: geometry[i][0] };
+    const end = { lat: geometry[i + 1][1], lng: geometry[i + 1][0] };
+    const hit = projectOnSegment(point, start, end);
+    if (hit.distance < bestDistance) {
+      bestDistance = hit.distance;
+      bestIndex = i;
+      bestT = hit.t;
+    }
+  }
+  const a = { lat: geometry[bestIndex][1], lng: geometry[bestIndex][0] };
+  const b = { lat: geometry[bestIndex + 1][1], lng: geometry[bestIndex + 1][0] };
+  let remaining = metresBetween(a, b) * (1 - bestT);
+  for (let i = bestIndex + 1; i < geometry.length - 1; i += 1) {
+    remaining += metresBetween({ lat: geometry[i][1], lng: geometry[i][0] }, { lat: geometry[i + 1][1], lng: geometry[i + 1][0] });
+  }
+  return remaining;
+}
+
+export interface DirectReading {
+  state: "arrived" | "poor_signal" | "no_route";
+  /** Measured straight-line distance. It is NOT a road distance and must be labelled so. */
+  straightMetres: number;
+  bearingToDestination: number;
+  heading: CompassPoint;
+}
+
+/**
+ * What can honestly be said with no route: how far away the destination is as
+ * the crow flies and in which direction. No ETA, progress or off-route claims.
+ */
+export function readDirect(position: LatLng, accuracyMetres: number | null, destination: LatLng): DirectReading {
+  const straight = metresBetween(position, destination);
+  const bearing = bearingDegrees(position, destination);
+  let state: DirectReading["state"] = "no_route";
+  if (straight <= ARRIVAL_RADIUS_METRES) state = "arrived";
+  else if (accuracyMetres !== null && accuracyMetres > POOR_ACCURACY_METRES) state = "poor_signal";
+  return { state, straightMetres: Math.round(straight), bearingToDestination: Math.round(bearing), heading: compassPoint(bearing) };
 }
 
 /** Share of the journey already covered, 0 to 1. */

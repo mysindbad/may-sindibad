@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Map as MapLibreMap, Marker as MapLibreMarker, NavigationControl, LngLatBounds } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getDefaultTileStyle } from "@/lib/maps/types";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { metresBetween, type RoutePoint } from "@/lib/navigation/route";
 
 /** Below this distance to the destination, a tight follow-zoom still keeps it
@@ -19,6 +20,12 @@ const CLOSE_FOLLOW_METRES = 250;
 const ROUTE_SOURCE = "sindbad-route";
 const ROUTE_LAYER = "sindbad-route-line";
 const ROUTE_CASING_LAYER = "sindbad-route-casing";
+
+// A saturated blue that reads over pale streets, parks and satellite tiles,
+// inside a white casing (the familiar navigation-line look). The traveller's
+// own dot is sky blue with a white ring, so the two stay distinguishable.
+const ROUTE_BLUE = "#1a56db";
+const ROUTE_CASING = "#ffffff";
 
 /** A proper map pin, not a plain dot - the anchor is the tip, matching where
  * MapLibre positions it, so it points exactly at the destination instead of
@@ -73,12 +80,18 @@ export function RouteMapView({
   const mapRef = useRef<MapLibreMap | null>(null);
   const readyRef = useRef(false);
   const userMarkerRef = useRef<MapLibreMarker | null>(null);
+  const { dict } = useLocale();
+  // Production has no implicit public-tile fallback (see maps/types.ts), so an
+  // unconfigured environment must say so instead of rendering an empty grey box.
+  const [tilesMissing, setTilesMissing] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const style = getDefaultTileStyle();
     if (!style) {
       console.error("Map tiles are not configured for this environment.");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability check on mount.
+      setTilesMissing(true);
       return;
     }
 
@@ -116,14 +129,24 @@ export function RouteMapView({
   // loading. The source and its layers are created here, lazily, on the
   // first real geometry - not up front with an empty LineString, which
   // MapLibre's vector-tile indexing can get stuck on and never recover a
-  // route line from even once real coordinates arrive later.
+  // route line from even once real coordinates arrive later. An empty
+  // geometry (route cleared on a mode switch or a failure) REMOVES the line,
+  // so a stale route is never left drawn under a new state.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || geometry.length < 2) return;
+    if (!map) return;
 
     function apply() {
       const current = mapRef.current;
       if (!current || !readyRef.current) return;
+
+      if (geometry.length < 2) {
+        if (current.getLayer(ROUTE_LAYER)) current.removeLayer(ROUTE_LAYER);
+        if (current.getLayer(ROUTE_CASING_LAYER)) current.removeLayer(ROUTE_CASING_LAYER);
+        if (current.getSource(ROUTE_SOURCE)) current.removeSource(ROUTE_SOURCE);
+        return;
+      }
+
       const data = {
         type: "Feature" as const,
         properties: {},
@@ -132,25 +155,28 @@ export function RouteMapView({
       const existing = current.getSource(ROUTE_SOURCE);
       if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
         (existing as unknown as { setData: (data: unknown) => void }).setData(data);
-        return;
+      } else {
+        current.addSource(ROUTE_SOURCE, { type: "geojson", data });
+        current.addLayer({
+          id: ROUTE_CASING_LAYER,
+          type: "line",
+          source: ROUTE_SOURCE,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": ROUTE_CASING, "line-width": 10, "line-opacity": 0.95 },
+        });
+        current.addLayer({
+          id: ROUTE_LAYER,
+          type: "line",
+          source: ROUTE_SOURCE,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": ROUTE_BLUE, "line-width": 6 },
+        });
       }
-      current.addSource(ROUTE_SOURCE, { type: "geojson", data });
-      // Two stacked lines: a wide dark casing under a bright core keeps the
-      // path readable over both pale streets and dark satellite tiles.
-      current.addLayer({
-        id: ROUTE_CASING_LAYER,
-        type: "line",
-        source: ROUTE_SOURCE,
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#0b3552", "line-width": 9, "line-opacity": 0.55 },
-      });
-      current.addLayer({
-        id: ROUTE_LAYER,
-        type: "line",
-        source: ROUTE_SOURCE,
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#22b8cf", "line-width": 5 },
-      });
+
+      // Show the whole route once, so the line is visible the moment it arrives.
+      const bounds = new LngLatBounds(geometry[0], geometry[0]);
+      for (const point of geometry) bounds.extend(point);
+      current.fitBounds(bounds, { padding: 64, maxZoom: 17, duration: 500 });
     }
 
     if (readyRef.current) {
@@ -185,6 +211,14 @@ export function RouteMapView({
       map.fitBounds(bounds, { padding: 64, maxZoom: 16, duration: 700 });
     }
   }, [position, follow, destination]);
+
+  if (tilesMissing) {
+    return (
+      <div role="status" className={"flex items-center justify-center bg-slate-100 p-4 text-center text-sm text-slate-500 " + (className ?? "h-full w-full")}>
+        {dict.navigation.mapUnavailable}
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className={className ?? "h-full w-full"} />;
 }

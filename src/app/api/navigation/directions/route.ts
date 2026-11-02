@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { jsonError, zodErrorResponse } from "@/lib/api-utils";
+import { zodErrorResponse } from "@/lib/api-utils";
 import { checkRateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 import { parseJsonResponseWithLimit } from "@/lib/http/bounded-body";
-import { estimateRoute, isTravelMode, type RoutePlan, type RoutePoint, type TravelMode } from "@/lib/navigation/route";
+import {
+  MAX_WALKING_STRAIGHT_METRES,
+  isTravelMode,
+  metresBetween,
+  type DirectionsFailureCode,
+  type LatLng,
+  type TravelMode,
+} from "@/lib/navigation/route";
+import { parseOsrmRoute, type OsrmResponse } from "@/lib/navigation/osrm";
+import { buildOsrmUrl, resolveRoutingEndpoint, type RoutingEndpoint } from "@/lib/navigation/providers";
 
 // Directions for the in-app navigation screen.
 //
-// A routing engine is optional on purpose. When ROUTING_OSRM_URL points at an
-// OSRM-compatible server the traveller gets a real street path; when it does
-// not, or the server is slow or down, the endpoint still answers with a
-// straight-line estimate. Navigation degrading to "it is 800 m north-east of
-// you" is useful; navigation returning an error is not.
+// This endpoint only ever answers with a REAL route from a routing engine, or
+// with an explicit failure. It never returns a straight line as if it were a
+// road, never reuses car geometry for a pedestrian, and never invents a
+// distance or ETA. On failure it still reports the measured straight-line
+// distance (clearly a different quantity) so the screen can stay useful.
+//
+// Provider choice, limits and licence notes: src/lib/navigation/providers.ts.
 
 export const dynamic = "force-dynamic";
 
@@ -23,80 +34,38 @@ const querySchema = z.object({
   mode: z.string().optional(),
 });
 
-const DEFAULT_OSRM_URL = "https://router.project-osrm.org";
-const OSRM_TIMEOUT_MS = 4500;
-const MAX_ROUTE_BYTES = 512 * 1024;
+const OSRM_TIMEOUT_MS = 6000;
+const MAX_ROUTE_BYTES = 1024 * 1024;
 
-/** OSRM profile names differ per deployment; these match the public builds. */
-const PROFILE: Record<TravelMode, string> = { walking: "foot", driving: "driving" };
+type FetchOutcome = { kind: "payload"; payload: OsrmResponse } | { kind: "failed"; retryable: boolean };
 
-interface OsrmResponse {
-  code?: string;
-  routes?: Array<{
-    distance?: number;
-    duration?: number;
-    geometry?: { coordinates?: unknown };
-  }>;
-}
-
-function readGeometry(raw: unknown): RoutePoint[] {
-  if (!Array.isArray(raw)) return [];
-  const points: RoutePoint[] = [];
-  for (const entry of raw) {
-    if (!Array.isArray(entry) || entry.length < 2) continue;
-    const lng = Number(entry[0]);
-    const lat = Number(entry[1]);
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
-    points.push([lng, lat]);
-  }
-  return points;
-}
-
-async function askOsrm(
-  baseUrl: string,
-  profile: string,
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number },
-): Promise<{ distanceMeters: number; durationSeconds: number; geometry: RoutePoint[] } | null> {
-  const coords = from.lng + "," + from.lat + ";" + to.lng + "," + to.lat;
-  const url = baseUrl.replace(/\/+$/, "") + "/route/v1/" + profile + "/" + coords + "?overview=full&geometries=geojson&alternatives=false&steps=false";
-
+async function askOsrm(endpoint: RoutingEndpoint, from: LatLng, to: LatLng): Promise<FetchOutcome> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { signal: controller.signal, headers: { Accept: "application/json" } });
-    if (!response.ok) return null;
-
-    // The routing server is third-party input: bound it before parsing.
+    const response = await fetch(buildOsrmUrl(endpoint, from, to), {
+      signal: controller.signal,
+      // Public community routing servers ask clients to identify themselves.
+      headers: { Accept: "application/json", "User-Agent": "MySindbad/1.0 (travel app; routing client)" },
+    });
+    // 4xx from OSRM carries a JSON body with a code like NoRoute; 5xx / 429 are transient.
+    if (response.status >= 500 || response.status === 429) return { kind: "failed", retryable: true };
     const payload = await parseJsonResponseWithLimit<OsrmResponse>(response, MAX_ROUTE_BYTES);
-    if (payload.code !== "Ok") return null;
-
-    const route = payload.routes && payload.routes[0];
-    if (!route) return null;
-
-    const geometry = readGeometry(route.geometry && route.geometry.coordinates);
-    if (geometry.length < 2) return null;
-
-    const distanceMeters = Number(route.distance);
-    const durationSeconds = Number(route.duration);
-    if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) return null;
-
-    return {
-      distanceMeters: Math.round(distanceMeters),
-      durationSeconds: Number.isFinite(durationSeconds) && durationSeconds > 0 ? Math.round(durationSeconds) : 0,
-      geometry,
-    };
+    return { kind: "payload", payload };
   } catch {
-    return null;
+    return { kind: "failed", retryable: true };
   } finally {
     clearTimeout(timer);
   }
 }
 
+function failure(code: DirectionsFailureCode, status: number, straightLineMeters: number, retryable: boolean) {
+  return NextResponse.json({ error: code, retryable, straightLineMeters: Math.round(straightLineMeters) }, { status });
+}
+
 export async function GET(request: Request) {
   const rate = await checkRateLimit(clientKeyFromRequest(request, "navigation-directions"), 120, 10 * 60 * 1000);
-  if (!rate.allowed) return jsonError("Too many route requests. Please slow down.", 429);
+  if (!rate.allowed) return NextResponse.json({ error: "Too many route requests. Please slow down." }, { status: 429 });
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse({
@@ -108,38 +77,36 @@ export async function GET(request: Request) {
   });
   if (!parsed.success) return zodErrorResponse(parsed.error);
 
-  const mode: TravelMode = parsed.data.mode && isTravelMode(parsed.data.mode) ? parsed.data.mode : "walking";
+  const requestedMode = parsed.data.mode;
+  if (requestedMode !== undefined && !isTravelMode(requestedMode)) {
+    return failure("invalid_request", 400, 0, false);
+  }
+  const mode: TravelMode = requestedMode ?? "walking";
   const from = { lat: parsed.data.fromLat, lng: parsed.data.fromLng };
   const to = { lat: parsed.data.toLat, lng: parsed.data.toLng };
+  const straight = metresBetween(from, to);
 
-  const configured = process.env.ROUTING_OSRM_URL;
-  const baseUrl = configured && configured.trim() ? configured.trim() : DEFAULT_OSRM_URL;
-
-  let routed = await askOsrm(baseUrl, PROFILE[mode], from, to);
-  if (!routed && mode === "walking") {
-    // Many OSRM deployments only ship the car profile. A car's street path is
-    // still a far better walking hint than a straight line across buildings.
-    routed = await askOsrm(baseUrl, PROFILE.driving, from, to);
+  if (mode === "walking" && straight > MAX_WALKING_STRAIGHT_METRES) {
+    return failure("too_far_for_walking", 422, straight, false);
   }
 
-  let plan: RoutePlan;
-  if (routed) {
-    const estimate = estimateRoute(from, to, mode);
-    plan = {
-      mode,
-      source: "routed",
-      distanceMeters: routed.distanceMeters,
-      // A driving duration means nothing to someone on foot, so walking always
-      // re-derives its own time from the real street distance.
-      durationSeconds:
-        mode === "walking" || routed.durationSeconds <= 0
-          ? Math.round((routed.distanceMeters / Math.max(1, estimate.distanceMeters)) * estimate.durationSeconds)
-          : routed.durationSeconds,
-      geometry: routed.geometry,
-    };
-  } else {
-    plan = estimateRoute(from, to, mode);
+  const endpoint = resolveRoutingEndpoint(mode);
+
+  let outcome = await askOsrm(endpoint, from, to);
+  if (outcome.kind === "failed" && outcome.retryable) outcome = await askOsrm(endpoint, from, to);
+  if (outcome.kind === "failed") return failure("route_unavailable", 503, straight, true);
+
+  const result = parseOsrmRoute(outcome.payload, from, to, mode, endpoint.kind);
+  if (!result.ok) {
+    // profile_mismatch means the configured engine answered a walking request
+    // with vehicle speeds: a configuration error, not something to retry.
+    if (result.code === "profile_mismatch") {
+      console.error("Routing engine returned a vehicle-speed route for a walking request.", { baseUrl: endpoint.baseUrl });
+      return failure("profile_mismatch", 503, straight, false);
+    }
+    const status = result.code === "no_route_nearby" ? 422 : 503;
+    return failure(result.code, status, straight, result.code === "route_unavailable");
   }
 
-  return NextResponse.json({ route: plan });
+  return NextResponse.json({ route: result.plan });
 }
