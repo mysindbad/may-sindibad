@@ -144,6 +144,19 @@ const de = {
     styleLuxury: "Luxus",
     styleBudget: "Preisbewusst",
     noActivities: "Noch keine Aktivitäten.",
+    tripTitle: "Reisetitel",
+    titlePlaceholder: "Abenteuer in {city}",
+    defaultTitle: "Reise nach {city}",
+    interests: {
+      food: "Essen",
+      culture: "Kultur",
+      nature: "Natur",
+      nightlife: "Nachtleben",
+      shopping: "Shopping",
+      adventure: "Abenteuer",
+      relaxation: "Entspannung",
+      family: "Familie",
+    },
   },
   ai: {
     title: "Sindbad AI",
@@ -424,6 +437,8 @@ const de = {
     publicRouterNotice: "Die Routen stammen von einem experimentellen öffentlichen Dienst und können langsam oder nicht verfügbar sein.",
     paceNote: "Die Gehzeit wird mit einem durchschnittlichen Tempo geschätzt.",
     mapUnavailable: "Die Karte ist derzeit nicht verfügbar.",
+    privacyNotice: "Zum Zeichnen der Route werden deine Position (auf etwa 10 m gerundet) und das Ziel an einen Routing-Dienst gesendet. My Sindbad speichert deine Position nicht; der Dienst kann eigene Anfrageprotokolle führen.",
+    routingDisabled: "Die Routenberechnung ist in dieser Umgebung noch nicht aktiviert. Du kannst eine andere Karten-App öffnen.",
   },
   categories: {
     breakfast: "Frühstück",

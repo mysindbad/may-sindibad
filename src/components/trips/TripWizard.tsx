@@ -6,7 +6,9 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui/primitives";
 import { InlineAlert } from "@/components/ui/feedback";
 
-const INTERESTS = ["food", "culture", "nature", "nightlife", "shopping", "adventure", "relaxation", "family"];
+// These values are what the server stores and the planner reads, so they stay
+// as-is; only their on-screen labels are translated (dict.trips.interests).
+const INTERESTS = ["food", "culture", "nature", "nightlife", "shopping", "adventure", "relaxation", "family"] as const;
 
 export function TripWizard() {
   const { dict, locale } = useLocale();
@@ -41,7 +43,7 @@ export function TripWizard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title || `${destinationCity} trip`,
+          title: title || dict.trips.defaultTitle.replace("{city}", destinationCity),
           destinationCity,
           destinationCountry,
           startDate,
@@ -80,8 +82,10 @@ export function TripWizard() {
       </div>
 
       <div>
-        <Label htmlFor="trip-title">Trip title ({dict.common.optional})</Label>
-        <Input id="trip-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`${destinationCity} adventure`} />
+        <Label htmlFor="trip-title">
+          {dict.trips.tripTitle} ({dict.common.optional})
+        </Label>
+        <Input id="trip-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={dict.trips.titlePlaceholder.replace("{city}", destinationCity)} />
       </div>
 
       <div>
@@ -130,7 +134,7 @@ export function TripWizard() {
                   : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400"
               }
             >
-              {interest}
+              {dict.trips.interests[interest]}
             </button>
           ))}
         </div>

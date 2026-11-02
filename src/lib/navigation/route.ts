@@ -39,6 +39,7 @@ export type DirectionsFailureCode =
   | "no_route_nearby"
   | "too_far_for_walking"
   | "profile_mismatch"
+  | "provider_not_configured"
   | "invalid_request";
 
 /** Pace used only to re-derive a walking time when an engine's own time is not credible. */

@@ -76,6 +76,26 @@ export function resolveRoutingEndpoint(mode: TravelMode, env: Record<string, str
   return PUBLIC_EXPERIMENTAL[mode];
 }
 
+/**
+ * May the community routing service be used in this environment?
+ * Outside production: yes (development and QA). In production: only when the
+ * owner has said so explicitly with ROUTING_ALLOW_PUBLIC_EXPERIMENTAL=true,
+ * after accepting its terms (free community service, 1 request/second for
+ * everyone, no uptime guarantee, request logs kept by the operator, OSM
+ * attribution required). Until then production answers "routing not enabled"
+ * honestly instead of silently sending travellers' positions to it.
+ */
+export function publicRouterAllowed(env: Record<string, string | undefined> = process.env): boolean {
+  if (env.NODE_ENV !== "production") return true;
+  return env.ROUTING_ALLOW_PUBLIC_EXPERIMENTAL === "true";
+}
+
+/** Latitude/longitude precision sent to a routing provider: 4 decimals is about 11 m. */
+export function coarsenForProvider(point: { lat: number; lng: number }): { lat: number; lng: number } {
+  const round = (value: number) => Math.round(value * 1e4) / 1e4;
+  return { lat: round(point.lat), lng: round(point.lng) };
+}
+
 export function buildOsrmUrl(
   endpoint: RoutingEndpoint,
   from: { lat: number; lng: number },

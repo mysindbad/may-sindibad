@@ -144,6 +144,19 @@ const fr = {
     styleLuxury: "Luxe",
     styleBudget: "Économique",
     noActivities: "Aucune activité pour le moment.",
+    tripTitle: "Titre du voyage",
+    titlePlaceholder: "Aventure à {city}",
+    defaultTitle: "Voyage à {city}",
+    interests: {
+      food: "Gastronomie",
+      culture: "Culture",
+      nature: "Nature",
+      nightlife: "Vie nocturne",
+      shopping: "Shopping",
+      adventure: "Aventure",
+      relaxation: "Détente",
+      family: "Famille",
+    },
   },
   ai: {
     title: "Sindbad AI",
@@ -424,6 +437,8 @@ const fr = {
     publicRouterNotice: "Les itinéraires viennent d'un service public expérimental, parfois lent ou indisponible.",
     paceNote: "Le temps de marche est estimé à une allure moyenne.",
     mapUnavailable: "La carte n'est pas disponible pour le moment.",
+    privacyNotice: "Pour tracer l'itinéraire, votre position (arrondie à environ 10 m) et la destination sont envoyées à un service d'itinéraires. My Sindbad ne conserve pas votre position ; le service peut garder ses propres journaux de requêtes.",
+    routingDisabled: "Le calcul d'itinéraire n'est pas encore activé dans cet environnement. Vous pouvez ouvrir une autre application de cartes.",
   },
   categories: {
     breakfast: "Petit-déjeuner",

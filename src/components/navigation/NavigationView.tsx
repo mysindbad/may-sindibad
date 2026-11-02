@@ -71,15 +71,13 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
       lastRouteAtRef.current = Date.now();
       const requestId = ++requestIdRef.current;
       setLoading(true);
-      const params = new URLSearchParams({
-        fromLat: String(from.lat),
-        fromLng: String(from.lng),
-        toLat: String(destination.lat),
-        toLng: String(destination.lng),
-        mode: travelMode,
-      });
       try {
-        const res = await fetch("/api/navigation/directions?" + params.toString());
+        // POST with a JSON body: the traveller's position never appears in a URL.
+        const res = await fetch("/api/navigation/directions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fromLat: from.lat, fromLng: from.lng, toLat: destination.lat, toLng: destination.lng, mode: travelMode }),
+        });
         if (requestId !== requestIdRef.current) return;
         if (res.ok) {
           const data = (await res.json()) as { route?: RoutePlan };
@@ -308,6 +306,8 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         return dict.navigation.tooFarForWalking;
       case "profile_mismatch":
         return dict.navigation.routeConfigError;
+      case "provider_not_configured":
+        return dict.navigation.routingDisabled;
       default:
         return dict.navigation.routeUnavailable;
     }
@@ -355,6 +355,8 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
         </Button>
       </div>
 
+      <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{dict.navigation.privacyNotice}</p>
+
       <div role="status" aria-live="polite" className="space-y-2 empty:hidden">
         {locationMessage && <InlineAlert tone={locationFailure === "timeout" ? "info" : "warning"}>{locationMessage}</InlineAlert>}
         {!position && !locationFailure && <InlineAlert tone="info">{dict.navigation.locating}</InlineAlert>}
@@ -376,7 +378,9 @@ export function NavigationView({ place }: { place: NavigationPlace }) {
       {failure && !loading && (
         <Card className="space-y-2 p-3">
           <InlineAlert tone="warning">{stale ? dict.navigation.routeStale : failureMessage(failure.code)}</InlineAlert>
-          {!stale && failure.code !== "offline" && <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.routeUnavailableBody}</p>}
+          {!stale && failure.code !== "offline" && failure.code !== "provider_not_configured" && (
+            <p className="text-xs text-slate-600 dark:text-slate-400">{dict.navigation.routeUnavailableBody}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             {failure.retryable && usableFix && (
               <Button size="sm" onClick={retry}>

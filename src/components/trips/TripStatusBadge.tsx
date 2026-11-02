@@ -10,6 +10,6 @@ const TONE = {
 } as const;
 
 export function TripStatusBadge({ status, dict }: { status: keyof typeof TONE; dict: Dictionary }) {
-  const key = `status${status.charAt(0).toUpperCase()}${status.slice(1)}` as keyof Dictionary["trips"];
+  const key = `status${status.charAt(0).toUpperCase()}${status.slice(1)}` as "statusDraft" | "statusPlanned" | "statusActive" | "statusCompleted" | "statusCancelled";
   return <Badge tone={TONE[status]}>{dict.trips[key]}</Badge>;
 }

@@ -142,6 +142,19 @@ const en = {
     styleLuxury: "Luxury",
     styleBudget: "Budget",
     noActivities: "No activities yet.",
+    tripTitle: "Trip title",
+    titlePlaceholder: "{city} adventure",
+    defaultTitle: "{city} trip",
+    interests: {
+      food: "Food",
+      culture: "Culture",
+      nature: "Nature",
+      nightlife: "Nightlife",
+      shopping: "Shopping",
+      adventure: "Adventure",
+      relaxation: "Relaxation",
+      family: "Family",
+    },
   },
   ai: {
     title: "Sindbad AI",
@@ -421,6 +434,8 @@ const en = {
     publicRouterNotice: "Directions come from an experimental public service and may be slow or unavailable.",
     paceNote: "Walking time is estimated at an average pace.",
     mapUnavailable: "The map is not available right now.",
+    privacyNotice: "To draw the route, your position (rounded to about 10 m) and the destination are sent to a routing service. My Sindbad does not save your position; the service may keep its own request logs.",
+    routingDisabled: "Route directions are not enabled in this environment yet. You can open another maps app.",
   },
   categories: {
     breakfast: "Breakfast",

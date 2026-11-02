@@ -144,6 +144,19 @@ const ar = {
     styleLuxury: "فاخرة",
     styleBudget: "اقتصادية",
     noActivities: "لا توجد أنشطة بعد.",
+    tripTitle: "عنوان الرحلة",
+    titlePlaceholder: "مغامرة في {city}",
+    defaultTitle: "رحلة إلى {city}",
+    interests: {
+      food: "الطعام",
+      culture: "الثقافة",
+      nature: "الطبيعة",
+      nightlife: "الحياة الليلية",
+      shopping: "التسوق",
+      adventure: "المغامرة",
+      relaxation: "الاسترخاء",
+      family: "العائلة",
+    },
   },
   ai: {
     title: "سندباد الذكي",
@@ -423,6 +436,8 @@ const ar = {
     publicRouterNotice: "التوجيه يأتي من خدمة عامة تجريبية وقد يكون بطيئًا أو غير متاح.",
     paceNote: "زمن المشي مُقدَّر بسرعة مشي متوسطة.",
     mapUnavailable: "الخريطة غير متاحة حاليًا.",
+    privacyNotice: "لرسم الطريق يُرسل موقعك (مقرّباً إلى نحو 10 أمتار) والوجهة إلى خدمة توجيه. لا يحفظ ماي سندباد موقعك، وقد تحتفظ الخدمة بسجلات طلباتها الخاصة.",
+    routingDisabled: "خدمة رسم الطريق غير مفعّلة في هذه البيئة بعد. يمكنك فتح تطبيق خرائط آخر.",
   },
   categories: {
     breakfast: "الفطور",

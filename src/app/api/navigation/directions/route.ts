@@ -12,7 +12,10 @@ import {
   type TravelMode,
 } from "@/lib/navigation/route";
 import { parseOsrmRoute, type OsrmResponse } from "@/lib/navigation/osrm";
-import { buildOsrmUrl, resolveRoutingEndpoint, type RoutingEndpoint } from "@/lib/navigation/providers";
+import { buildOsrmUrl, coarsenForProvider, publicRouterAllowed, resolveRoutingEndpoint, type RoutingEndpoint } from "@/lib/navigation/providers";
+import { publicRouterSpacer } from "@/lib/navigation/spacer";
+import { isTrustedMutationRequest } from "@/lib/security/mutation-origin";
+import { parseJsonBodyWithLimit } from "@/lib/http/bounded-body";
 
 // Directions for the in-app navigation screen.
 //
@@ -23,6 +26,11 @@ import { buildOsrmUrl, resolveRoutingEndpoint, type RoutingEndpoint } from "@/li
 // distance (clearly a different quantity) so the screen can stay useful.
 //
 // Provider choice, limits and licence notes: src/lib/navigation/providers.ts.
+//
+// Privacy: the traveller's position is personal data. It is rounded to ~10 m
+// before it leaves for a routing provider, never written to our logs, and the
+// app sends it in a POST body (a GET puts coordinates in the URL, which
+// platform HTTP logs record). GET is kept for diagnostics only.
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +48,11 @@ const MAX_ROUTE_BYTES = 1024 * 1024;
 type FetchOutcome = { kind: "payload"; payload: OsrmResponse } | { kind: "failed"; retryable: boolean };
 
 async function askOsrm(endpoint: RoutingEndpoint, from: LatLng, to: LatLng): Promise<FetchOutcome> {
+  // The community router allows 1 request/second for everyone: wait for a
+  // slot, or fail honestly rather than breach it.
+  if (endpoint.kind === "public-experimental" && !(await publicRouterSpacer.take())) {
+    return { kind: "failed", retryable: true };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
   try {
@@ -63,18 +76,11 @@ function failure(code: DirectionsFailureCode, status: number, straightLineMeters
   return NextResponse.json({ error: code, retryable, straightLineMeters: Math.round(straightLineMeters) }, { status });
 }
 
-export async function GET(request: Request) {
+async function respond(request: Request, input: Record<string, unknown>) {
   const rate = await checkRateLimit(clientKeyFromRequest(request, "navigation-directions"), 120, 10 * 60 * 1000);
   if (!rate.allowed) return NextResponse.json({ error: "Too many route requests. Please slow down." }, { status: 429 });
 
-  const url = new URL(request.url);
-  const parsed = querySchema.safeParse({
-    fromLat: url.searchParams.get("fromLat"),
-    fromLng: url.searchParams.get("fromLng"),
-    toLat: url.searchParams.get("toLat"),
-    toLng: url.searchParams.get("toLng"),
-    mode: url.searchParams.get("mode") ?? undefined,
-  });
+  const parsed = querySchema.safeParse(input);
   if (!parsed.success) return zodErrorResponse(parsed.error);
 
   const requestedMode = parsed.data.mode;
@@ -82,8 +88,10 @@ export async function GET(request: Request) {
     return failure("invalid_request", 400, 0, false);
   }
   const mode: TravelMode = requestedMode ?? "walking";
-  const from = { lat: parsed.data.fromLat, lng: parsed.data.fromLng };
   const to = { lat: parsed.data.toLat, lng: parsed.data.toLng };
+  // The traveller's position is rounded (~10 m) before it goes anywhere. The
+  // destination is a public place pin and is sent as stored.
+  const from = coarsenForProvider({ lat: parsed.data.fromLat, lng: parsed.data.fromLng });
   const straight = metresBetween(from, to);
 
   if (mode === "walking" && straight > MAX_WALKING_STRAIGHT_METRES) {
@@ -91,6 +99,12 @@ export async function GET(request: Request) {
   }
 
   const endpoint = resolveRoutingEndpoint(mode);
+
+  // Production never falls back to the community router unless the owner has
+  // opted in (providers.ts). Nothing is sent anywhere in that case.
+  if (endpoint.kind === "public-experimental" && !publicRouterAllowed()) {
+    return failure("provider_not_configured", 503, straight, false);
+  }
 
   let outcome = await askOsrm(endpoint, from, to);
   if (outcome.kind === "failed" && outcome.retryable) outcome = await askOsrm(endpoint, from, to);
@@ -109,4 +123,25 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ route: result.plan });
+}
+
+// The app calls this: coordinates travel in the body, not the URL.
+export async function POST(request: Request) {
+  if (!isTrustedMutationRequest(request)) return failure("invalid_request", 403, 0, false);
+  const json = await parseJsonBodyWithLimit(request, 2 * 1024);
+  if (!json.ok || !json.body || typeof json.body !== "object") return failure("invalid_request", 400, 0, false);
+  return respond(request, json.body as Record<string, unknown>);
+}
+
+// Diagnostics only (curl / QA). Query strings are recorded by platform HTTP
+// logs, so the app itself never uses this.
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  return respond(request, {
+    fromLat: url.searchParams.get("fromLat"),
+    fromLng: url.searchParams.get("fromLng"),
+    toLat: url.searchParams.get("toLat"),
+    toLng: url.searchParams.get("toLng"),
+    mode: url.searchParams.get("mode") ?? undefined,
+  });
 }

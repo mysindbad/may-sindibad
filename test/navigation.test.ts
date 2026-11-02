@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildOsrmUrl, resolveRoutingEndpoint } from "../src/lib/navigation/providers";
+import { buildOsrmUrl, coarsenForProvider, publicRouterAllowed, resolveRoutingEndpoint } from "../src/lib/navigation/providers";
+import { createSpacer } from "../src/lib/navigation/spacer";
 import { parseOsrmRoute, readGeometry } from "../src/lib/navigation/osrm";
 import {
   canRouteFromFix,
@@ -172,5 +173,59 @@ describe("guardian readings", () => {
     const direct = readDirect(FROM, 10, TO);
     expect(direct.state).toBe("no_route");
     expect(direct.straightMetres).toBeGreaterThan(1500);
+  });
+});
+
+describe("routing provider compliance and privacy", () => {
+  it("does not allow the community router in production unless the owner opts in", () => {
+    expect(publicRouterAllowed({ NODE_ENV: "development" })).toBe(true);
+    expect(publicRouterAllowed({ NODE_ENV: "test" })).toBe(true);
+    expect(publicRouterAllowed({ NODE_ENV: "production" })).toBe(false);
+    expect(publicRouterAllowed({ NODE_ENV: "production", ROUTING_ALLOW_PUBLIC_EXPERIMENTAL: "yes" })).toBe(false);
+    expect(publicRouterAllowed({ NODE_ENV: "production", ROUTING_ALLOW_PUBLIC_EXPERIMENTAL: "true" })).toBe(true);
+  });
+
+  it("rounds a traveller's position to about 10 m before it leaves", () => {
+    expect(coarsenForProvider({ lat: 31.629512345, lng: -8.008987654 })).toEqual({ lat: 31.6295, lng: -8.009 });
+    expect(coarsenForProvider({ lat: -0.00004, lng: 0.00006 })).toEqual({ lat: -0, lng: 0.0001 });
+  });
+
+  it("spaces requests to the public router at least one interval apart, process-wide", async () => {
+    let clock = 10_000;
+    const slept: number[] = [];
+    const spacer = createSpacer({
+      intervalMs: 1100,
+      maxWaitMs: 3500,
+      maxWaiting: 3,
+      now: () => clock,
+      sleep: async (ms) => {
+        slept.push(ms);
+        clock += ms;
+      },
+    });
+    expect(await spacer.take()).toBe(true); // first goes straight through
+    expect(slept).toEqual([]);
+    expect(await spacer.take()).toBe(true); // second waits a full interval
+    expect(slept).toEqual([1100]);
+    expect(await spacer.take()).toBe(true);
+    expect(slept).toEqual([1100, 1100]);
+  });
+
+  it("gives up instead of queueing forever", async () => {
+    const clock = 0;
+    const spacer = createSpacer({ intervalMs: 1100, maxWaitMs: 2000, maxWaiting: 5, now: () => clock, sleep: () => new Promise(() => undefined) });
+    expect(await spacer.take()).toBe(true); // slot 0
+    void spacer.take(); // slot 1100 (waits, never resolves)
+    // the next would wait 2200 ms > 2000 ms: refused, and the refusal must not consume a slot
+    expect(await spacer.take()).toBe(false);
+    expect(await spacer.take()).toBe(false);
+  });
+
+  it("caps how many callers may wait at once", async () => {
+    const spacer = createSpacer({ intervalMs: 10, maxWaitMs: 10_000, maxWaiting: 2, now: () => 0, sleep: () => new Promise(() => undefined) });
+    await spacer.take(); // immediate
+    void spacer.take();
+    void spacer.take();
+    expect(await spacer.take()).toBe(false);
   });
 });
